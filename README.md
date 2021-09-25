@@ -124,8 +124,9 @@ Janus attempts to find all minimal solutions.  To save time, Janus avoids "trivi
 
 If you look carefully at the solutions you'll find that some pairs of moves are placed inside parentheses.  The moves within each pair twist opposing sides of the cube (e.g. front and back) and may be entered in either order without affecting the solution.  To save time, Janus treats such pairs as trivially equivalent and always reports a front twist before a back, a right twist before a left, and an up twist before a down.  So, in [Singmaster notation](https://rubiks.fandom.com/wiki/Notation), Janus displays a single solution to a scramble like  **F B2 U L' R** as **(R' L) U' (F' B2)** instead of four distinct solutions: **_R' L_** **U'** **_F' B2_** , **_R' L_** **U'** **_B2 F'_**, **_L R'_** **U'** **_F' B2_**, and **_L R'_** **U'** **_B2 F'_**
 
-## License
+## Notices
 
-MIT
+Copyright (C) 2021 Greg Dionne
+Distributed under MIT License
 
 Rubik's Cube is a registered trademark of Seven Towns, Ltd.
