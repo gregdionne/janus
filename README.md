@@ -126,7 +126,7 @@ If you look carefully at the solutions you'll find that some pairs of moves are 
 
 ## Notices
 
-Copyright (C) 2021 Greg Dionne
+Copyright (C) 2021 Greg Dionne.
 Distributed under MIT License
 
 Rubik's Cube is a registered trademark of Seven Towns, Ltd.
