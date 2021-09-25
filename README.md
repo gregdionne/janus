@@ -58,7 +58,7 @@ Janus has been wrapped for use in a simple command-line terminal program.
 
 You scramble the cube much as in the way you do in real life: by twisting it!  Enter the moves using [Singmaster notation](https://rubiks.fandom.com/wiki/Notation).
 
-When you execute it for the first time it will attempt to make a database "depthtable.janus" in your current working directory.  Make sure you have at least 45GB RAM and storage space create and  store the file ~45 GB.  It takes about forty-five minutes to create on a Mac mini (2018) with 64 GB memory and a single 3.2 GHz 6-Core Intel Core i7.  Next time you execute it, it will read from this file.
+When you execute it for the first time it will attempt to make a database "depthtable.janus" in your current working directory.  Make sure you have at least 45GB RAM and storage space.  It takes about forty-five minutes to create on a Mac mini (2018) with 64 GB memory and a single 3.2 GHz 6-Core Intel Core i7.  Next time you execute it, it will read from this file.
 
 ```
 $ janus
