@@ -48,7 +48,7 @@ You can compare this database against the "Huge Solver" pruning table found on K
 
 ### Compiling
 
-To compile on macOS (darwin), make sure you have Xcode installed with command line tools and then type "make" in the source directory.  The executable will appear in the parent directory.
+To compile on macOS (darwin), make sure you have Xcode installed with command line tools and then type "make".
 
 If you're a linux user, it should be compatible with clang (c++14), however it hasn't been tested.  Volunteers for other operating systems are gratefully accepted -- especially for those familiar with how Windows manages large memory requests.
 
