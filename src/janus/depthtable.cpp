@@ -86,7 +86,7 @@ std::size_t DepthTable::rbuild(const MoveTable *moveTable, std::size_t cidx,
   }
 }
 
-// recursively build the table from the home coordinate down to the 
+// recursively build the table from the home coordinate down to the
 // specified depth (single-threaded)
 void DepthTable::altbuild(const MoveTable *moveTable, std::size_t cidx,
                           std::size_t eidx, uint8_t depth) {

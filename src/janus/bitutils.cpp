@@ -59,6 +59,16 @@ uint16_t restoreMask(uint16_t mask, uint16_t target) {
   return target;
 }
 
+// next largest integer with same number of set bits
+uint16_t nextIdenticalHammingWeight(uint16_t mask) {
+
+  uint16_t lowbit = mask & -mask;
+  uint16_t upper = mask + lowbit;
+  uint16_t lower = ((mask ^ upper) / lowbit) >> 2;
+
+  return upper | lower;
+}
+
 // repeatedly divide both arguments by 3 (modulo 2^32)
 // whenever first argument is divisible by three
 template <typename T> static void reduce(T *u, T *a) {

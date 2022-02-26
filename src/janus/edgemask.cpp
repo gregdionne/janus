@@ -35,7 +35,7 @@ struct EdgeReturn {
   uint8_t flip;
 };
 
-// for the given position and specified twist, return the 
+// for the given position and specified twist, return the
 // new position and if a flip is requred
 static EdgeReturn twistEdge(uint8_t position, uint8_t twist) {
 

@@ -109,7 +109,7 @@ minimal 18-move solution(s) found:
 14: (R' L2) B' U2 B' U F U L' (F2 B2) L' U2 R' U2 F U B' 
 Enter scramble in Singmaster notation (Ctrl+D to exit):
 ```
-You can also pipe in a file with many scrambles in it.  You can find the 100-move random scrambles that Ben Botto used for his very well-written [Rubik's Cube Cracker](https://github.com/benbotto/rubiks-cube-cracker) in the "tests" folder.  Janus takes a little over six minutes to exhaustively solve the scrambles.
+You can also pipe in a file with many scrambles in it.  You can find the 100-move random scrambles that Ben Botto used for his very well-written [Rubik's Cube Cracker](https://github.com/benbotto/rubiks-cube-cracker) in the "tests" folder.  Janus takes a little over six minutes to enumerate all minimal-length solutions for the scrambles.
 
 ```
 $ janus < tests/benbotto.txt

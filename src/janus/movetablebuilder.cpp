@@ -9,7 +9,7 @@ namespace Janus {
 // to build the move table
 //
 // rec:  regular edge position coordinate
-// sec:  symmetricized edge position coordinate 
+// sec:  symmetricized edge position coordinate
 //       after removing permutations
 //
 // rec2sec[regEdgePosition]
@@ -18,8 +18,8 @@ namespace Janus {
 //
 // sec2rec[symEdgePosition]
 //  returns the regular position for the specified symmetricized
-//  edge position.  It is typically a stepping stone to create 
-//  the position mask for an edge.  
+//  edge position.  It is typically a stepping stone to create
+//  the position mask for an edge.
 MoveTableBuilder::MoveTableBuilder() {
   uint16_t symEdgePosition = 0;
 
@@ -59,7 +59,7 @@ MoveTableBuilder::MoveTableBuilder() {
 }
 
 // builds the table that performs whole-cube rotation/inversion
-// of te edges for the given symmetry
+// of the edges for the given symmetry
 void MoveTableBuilder::buildEquivalentEdgePermutationTable(
     std::vector<uint8_t> (&equivalentEdgePermutationTable)[nSymEdgePositions]) {
   for (uint16_t symPosition = 0; symPosition < nSymEdgePositions;
@@ -238,7 +238,7 @@ void MoveTableBuilder::buildEdgePermuteTable(
 
 // build table that performs specified twist on the edges
 // the permutation needed to rotate the cube to the new sym edge coordinate
-// is also returned.  
+// is also returned.
 void MoveTableBuilder::buildEdgeTwistTable(
     uint32_t (&edgeTwistTable)[nTwistsPerMove][nSymEdgeCoords]) {
   for (uint16_t position = 0; position < nSymEdgePositions; ++position) {
