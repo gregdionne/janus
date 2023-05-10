@@ -3,15 +3,32 @@
 #ifndef JANUS_MOVETABLE_HPP
 #define JANUS_MOVETABLE_HPP
 
+#include "array2d.hpp"
 #include "choosetable.hpp"
 #include "constants.hpp"
+#include "cornercoordinate.hpp" // only for nCornerCoords
 #include "cubeindex.hpp"
+#include "naso.hpp"
 
 namespace Janus {
 
 class MoveTable {
 public:
-  MoveTable() { buildMoveTables(); }
+  MoveTable(const Naso &janusNaso, uint8_t numJanusPerms,
+            uint8_t numEdgePermBits, uint16_t numSymEdgePositions,
+            uint32_t numSymEdgeCoords, uint8_t numCubeSyms, uint32_t homeCorner,
+            uint32_t homeEdge)
+      : cornerTwistTable(nFaceTwists, nCornerCoords),
+        edgeTwistTable(nFaceTwists, numSymEdgeCoords),
+        cornerPermuteTable(numJanusPerms, nCornerCoords),
+        edgePermuteTable(numJanusPerms, numSymEdgeCoords),
+        symmetryPermuteTable(numJanusPerms, numCubeSyms),
+        twistSymmetryTable(numCubeSyms, nFaceTwists),
+        equivalentEdgePermutationTable(numSymEdgePositions), naso(janusNaso),
+        nSymEdgeCoords(numSymEdgeCoords),
+        edgePermMask((1 << numEdgePermBits) - 1),
+        nEdgePermBits(numEdgePermBits), homeCornerIndex(homeCorner),
+        homeEdgeIndex(homeEdge) {}
 
   CubeIndex move(const CubeIndex &cube, uint8_t twist) const {
     return {move(cube.x, twist), move(cube.y, twist), move(cube.z, twist)};
@@ -21,53 +38,54 @@ public:
   // permutation=0 and symmetry=0
   //
   //   corner twist table returns a corner index
-  uint32_t cornerTwistTable[nTwistsPerMove][nSymCornerCoords];
+  Array2D<uint32_t> cornerTwistTable;
 
   //   edge twist table returns a (permuted) edge index
   //   shifted left by four bits.  the permutation needed
-  //   is encoded in the lower four bits
-  uint32_t edgeTwistTable[nTwistsPerMove][nSymEdgeCoords];
+  //   is encoded in the lower three or four bits
+  Array2D<uint32_t> edgeTwistTable;
 
   // tables that perform a permutation on the specified
   // corners, edges, and symmetries
-  uint32_t cornerPermuteTable[nJanusPerms][nSymCornerCoords];
-  uint32_t edgePermuteTable[nJanusPerms][nSymEdgeCoords];
-  uint8_t symmetryPermuteTable[nJanusPerms][nCubeSyms];
+  Array2D<uint32_t> cornerPermuteTable;
+  Array2D<uint32_t> edgePermuteTable;
+  Array2D<uint8_t> symmetryPermuteTable;
 
   // table that transforms a twist in the cube frame
   // to a Janus' local symmetry frame
-  uint8_t twistSymmetryTable[nCubeSyms][nTwistsPerMove];
+  Array2D<uint8_t> twistSymmetryTable;
 
   // For edge positions with 2-, 4-, 8- fold symmetry, more
   // than one permutation results in the same edge index.
   // We use this table to make sure corners and edge
   // flips that don't share the edge position symmetry can
   // be reached when incrementally expanding the depth table.
-  std::vector<uint8_t> equivalentEdgePermutationTable[nSymEdgePositions];
+  std::vector<std::vector<uint8_t>> equivalentEdgePermutationTable;
+
+  // used by depthtable
+  Naso getNaso() const { return naso; }
+  uint32_t getNSymEdgeCoords() const { return nSymEdgeCoords; }
+
+  uint8_t getEdgePermMask() const { return edgePermMask; }
+  uint8_t getNEdgePermBits() const { return nEdgePermBits; }
+
+  uint32_t getHomeCornerIndex() const { return homeCornerIndex; }
+  uint32_t getHomeEdgeIndex() const { return homeEdgeIndex; }
 
 private:
-  void buildMoveTables();
-
   // perform a move on a Janus index:
-  Index move(const Index &janus, uint8_t twist) const {
+  Index move(const Index &janus, uint8_t twist) const;
 
-    // transform the twist into the local frame of the Janus
-    twist = twistSymmetryTable[janus.symmetry][twist];
+  // whether aequivalens or disparilis...
+  const Naso naso;
 
-    // perform the transformed twist on the indices
-    uint32_t cvalue = cornerTwistTable[twist][janus.corners];
-    uint32_t evalue = edgeTwistTable[twist][janus.edges];
+  const uint32_t nSymEdgeCoords; // nSymEdgePositions * nEdgeFlips
 
-    // get resulting edge index and permutation
-    uint32_t eidx = evalue >> 4;
-    uint8_t permNeeded = evalue & 0x0f;
-
-    // perform needed permutation on the corner and symmetry
-    uint32_t cidx = cornerPermuteTable[permNeeded][cvalue];
-    uint8_t symmetry = symmetryPermuteTable[permNeeded][janus.symmetry];
-
-    return {cidx, eidx, symmetry};
-  }
+  // Naso:                           Aequivalens Disparilis
+  const uint8_t edgePermMask;     //    0x0f       0x07
+  const uint8_t nEdgePermBits;    //       4          3
+  const uint32_t homeCornerIndex; //      20         20
+  const uint32_t homeEdgeIndex;   //    2224       3496
 };
 
 } // namespace Janus

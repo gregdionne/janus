@@ -61,7 +61,7 @@ struct CornerMask {
   //   bit 2:  rotate a half-turn around x axis
   //   bit 1:  rotate a half-turn around z axis
   //   bit 0:  rotate a quarter-turn around z axis
-  CornerMask permute(uint8_t permutation) const;
+  CornerMask permute(uint8_t permutation, uint8_t reflectBit) const;
 
 private:
   // return a new mask restricted to twists 0 - 11

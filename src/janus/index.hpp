@@ -7,12 +7,6 @@
 
 namespace Janus {
 
-// corner index where corners are in "home" position with zero spin
-constexpr uint32_t homeCornerIndex = 20;
-
-// edge index where edges are in "home" state with zero flips
-constexpr uint32_t homeEdgeIndex = 2224 << 8;
-
 // index used to examine the depth table
 // and inform how it has been rotated/reflected from
 // its default orientation
@@ -44,23 +38,6 @@ struct Index {
   //
   // symm = (lehmer << 3) + reflectionMask.
   uint8_t symmetry;
-
-  // returns true when the Janus coordinate is solved.
-  //   true when edges and corners are in home position
-  //   and when the "z" symmetry reflection bit is unset.
-  //
-  //   An unset "z" bit prevents the case where the two
-  //   faces of each Janus (corners and edges) are aligned
-  //   with the wrong nose (center piece).
-  bool isSolved() const {
-    return corners == homeCornerIndex && edges == homeEdgeIndex &&
-           (symmetry & 1) == 0;
-  }
-
-  // "solved" or "home" coordinate
-  static Index home(uint8_t symmetry) {
-    return {homeCornerIndex, homeEdgeIndex, symmetry};
-  }
 };
 
 } // namespace Janus

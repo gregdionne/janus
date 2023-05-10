@@ -1,3 +1,5 @@
+janus_server
+janus_cli
 janus
 .build
 !janus/

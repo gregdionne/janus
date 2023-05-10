@@ -105,10 +105,10 @@ EdgeMask EdgeMask::move(uint8_t twist) const {
 
 // permute the specified position and flip to a new position and flip
 static EdgeReturn permuteEdge(uint8_t position, uint8_t flip,
-                              uint8_t permutation) {
+                              uint8_t permutation, uint8_t reflectBit) {
 
-  // reflect about x-y plane?
-  if (permutation & 0x08) {
+  // reflect across x-y plane?
+  if (permutation & reflectBit) {
     uint8_t rem3 = position % 3;
     if (rem3 > 0) {
       uint8_t div3 = position / 3;
@@ -144,7 +144,7 @@ static EdgeReturn permuteEdge(uint8_t position, uint8_t flip,
 }
 
 // return a new edge mask after performing the specified permutation
-EdgeMask EdgeMask::permute(uint8_t permutation) const {
+EdgeMask EdgeMask::permute(uint8_t permutation, uint8_t reflectBit) const {
   EdgeMask out{0, 0, 0};
 
   int tmpFace = face;
@@ -155,8 +155,8 @@ EdgeMask EdgeMask::permute(uint8_t permutation) const {
     int thisFace = tmpFace & 1;
     int thisValid = tmpValid & 1;
     int thisFlip = tmpFlip & 1;
-    auto retVal =
-        permuteEdge(edge, thisFlip, permutation); // get its destination
+    auto retVal = permuteEdge(edge, thisFlip, permutation,
+                              reflectBit);   // get its destination
     out.face |= thisFace << retVal.position; // move the face to its destination
     out.valid |= thisValid << retVal.position;
     out.flip |= (thisValid & retVal.flip) << retVal.position;

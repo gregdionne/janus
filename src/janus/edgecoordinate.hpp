@@ -13,7 +13,7 @@
 //
 // To reduce the size of the depth table, the edge positions are
 // checked to see if they can be reduced taking symmetry into account
-// This reduces the position count from 34,650 to 2,256 positions.
+// This reduces the position count from 34,650 to 4,425 positions.
 //
 // There are 2^8 ways to flip the eight edges
 

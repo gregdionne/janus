@@ -70,7 +70,7 @@ struct EdgeMask {
   //   bit 2:  rotate a half-turn around x axis
   //   bit 1:  rotate a half-turn around z axis
   //   bit 0:  rotate a quarter-turn around z axis
-  EdgeMask permute(uint8_t permutation) const;
+  EdgeMask permute(uint8_t permutation, uint8_t reflectBit) const;
 
 private:
   // same as move(), but restricted to quater twists.

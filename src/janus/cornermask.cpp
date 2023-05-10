@@ -117,10 +117,10 @@ CornerMask CornerMask::move(uint8_t twist) const {
 
 // with the given initial corner position and spin perform the specified twist
 static CornerReturn permuteCorner(uint8_t position, uint8_t spin,
-                                  uint8_t permutation) {
+                                  uint8_t permutation, uint8_t reflectBit) {
 
-  // reflect about x-y plane?
-  if (permutation & 0x08) {
+  // reflect across x-y plane?
+  if (permutation & reflectBit) {
     position ^= 0x01;
     spin = (3 - spin) % 3;
   }
@@ -144,7 +144,7 @@ static CornerReturn permuteCorner(uint8_t position, uint8_t spin,
 }
 
 // return a new mask after performing the specfied permutation
-CornerMask CornerMask::permute(uint8_t permutation) const {
+CornerMask CornerMask::permute(uint8_t permutation, uint8_t reflectBit) const {
   CornerMask out{0, 0};
 
   int tmpFace = face;
@@ -154,7 +154,7 @@ CornerMask CornerMask::permute(uint8_t permutation) const {
     int thisFace = tmpFace & 1;
     int thisSpin = tmpSpin % 3;
 
-    auto retVal = permuteCorner(corner, thisSpin, permutation);
+    auto retVal = permuteCorner(corner, thisSpin, permutation, reflectBit);
     out.face |= thisFace << retVal.position;
     out.spin += retVal.spin * pow3[retVal.position];
 

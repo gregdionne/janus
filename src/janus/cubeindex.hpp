@@ -14,15 +14,6 @@ struct CubeIndex {
   Index x; // front-back
   Index y; // right-left
   Index z; // up-down
-
-  // returns true if all Janus indices are solved
-  bool isSolved() const { return x.isSolved() && y.isSolved() && z.isSolved(); }
-
-  // returns the "home" or solved state for each of the
-  // x, y, and z axes.
-  static CubeIndex home() {
-    return {Index::home(32), Index::home(24), Index::home(0)};
-  }
 };
 
 } // namespace Janus

@@ -33,8 +33,9 @@ struct Mask {
   //   bit 2:  rotate a half-turn around x axis
   //   bit 1:  rotate a half-turn around z axis
   //   bit 0:  rotate a quarter-turn around z axis
-  Mask permute(uint8_t permutation) const {
-    return {cornerMask.permute(permutation), edgeMask.permute(permutation)};
+  Mask permute(uint8_t permutation, uint8_t reflectBit) const {
+    return {cornerMask.permute(permutation, reflectBit),
+            edgeMask.permute(permutation, reflectBit)};
   }
 };
 
