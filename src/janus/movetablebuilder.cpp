@@ -5,10 +5,10 @@
 
 namespace Janus {
 
-MoveTableBuilder::MoveTableBuilder(Naso nas)
-    : naso(nas), nEdgePermBits(selectAD(naso, nEdgePermBitsA, nEdgePermBitsD)),
-      nJanusPerms(1 << nEdgePermBits), reflectBit(1 << (nEdgePermBits - 1)),
-      nSymEdgePosBits(selectAD(naso, nSymEdgePosBitsA, nSymEdgePosBitsD)) {
+MoveTableBuilder::MoveTableBuilder(const CLIOptions &janusOptions)
+    : options(janusOptions), nEdgePermBits(selectNEdgePermBits()),
+      nJanusPerms(1 << nEdgePermBits),
+      nSymEdgePosBits(selectNSymEdgePosBits()) {
   buildEdgePositionTables();
   initHomeIndices();
 }
@@ -26,7 +26,7 @@ void MoveTableBuilder::buildEdgePositionTables() {
 
     for (uint8_t perm = 1; perm < nJanusPerms; ++perm) {
 
-      EdgeMask pem = jem.permute(perm, reflectBit);
+      EdgeMask pem = jem.permute(perm);
       uint16_t permutedRegPosition = jem2pos(pem);
 
       if (permutedRegPosition < bestRegPosition) {
@@ -61,7 +61,6 @@ void MoveTableBuilder::initHomeIndices() {
   EdgeMask em{0x0db6, 0x01b0, 0x0000};
   uint8_t dummyPermNeeded;
   homeEdgeIndex = jem2jec(em, dummyPermNeeded).tableIndex();
-
   // corner index where corner is in "home" state with zero spins
   // and is the coordinate corresponding to:
   //    face: 01010101 (0x55)
@@ -73,8 +72,8 @@ void MoveTableBuilder::initHomeIndices() {
 // constructs and returns a move table
 std::unique_ptr<MoveTable> MoveTableBuilder::build() {
   auto moveTable = std::make_unique<MoveTable>(
-      naso, nJanusPerms, nEdgePermBits, nSymEdgePositions, nSymEdgeCoords,
-      nCubeSyms, homeCornerIndex, homeEdgeIndex);
+      nJanusPerms, nEdgePermBits, nSymEdgePositions, nSymEdgeCoords, nCubeSyms,
+      homeCornerIndex, homeEdgeIndex);
   buildCornerPermuteTable(moveTable->cornerPermuteTable);
   buildCornerTwistTable(moveTable->cornerTwistTable);
   buildEdgeTwistTable(moveTable->edgeTwistTable);
@@ -97,7 +96,7 @@ void MoveTableBuilder::buildEquivalentEdgePermutationTable(
     EdgeMask jem = pos2jem(regPosition);
 
     for (uint8_t perm = 1; perm < nJanusPerms; ++perm) {
-      EdgeMask pem = jem.permute(perm, reflectBit);
+      EdgeMask pem = jem.permute(perm);
       uint16_t permutedRegPosition = jem2pos(pem);
 
       if (permutedRegPosition == regPosition) {
@@ -114,7 +113,7 @@ EdgeMask MoveTableBuilder::pos2jem(uint16_t regPosition) {
   uint16_t mask0 = c12_4.position2mask[regPosition / C_8_4];
   uint16_t mask1 = c8_4.position2mask[regPosition % C_8_4];
 
-  uint16_t valid = ~mask0 & ((1 << 12) - 1);
+  uint16_t valid = ~mask0 & ((1 << nEdges) - 1);
   uint16_t face = restoreMask(mask0, mask1);
 
   return {valid, face, 0};
@@ -124,7 +123,7 @@ EdgeMask MoveTableBuilder::pos2jem(uint16_t regPosition) {
 // edge mask.  flips in the mask are ignored.
 uint16_t MoveTableBuilder::jem2pos(EdgeMask pem) {
 
-  uint16_t pmask0 = ((1 << 12) - 1) & ~pem.valid;
+  uint16_t pmask0 = ((1 << nEdges) - 1) & ~pem.valid;
   uint16_t pmask1 = removeMask(pmask0, pem.face);
 
   uint16_t permutedRegPosition =
@@ -180,7 +179,7 @@ EdgeMask MoveTableBuilder::jec2jem(const EdgeCoordinate &jec) {
   uint16_t mask0 = c12_4.position2mask[regPosition / C_8_4];
   uint16_t mask1 = c8_4.position2mask[regPosition % C_8_4];
 
-  uint16_t valid = ~mask0 & ((1 << 12) - 1);
+  uint16_t valid = ~mask0 & ((1 << nEdges) - 1);
   uint16_t face = restoreMask(mask0, mask1);
   uint16_t flip = restoreMask(mask0, jec.flip);
 
@@ -191,15 +190,15 @@ EdgeMask MoveTableBuilder::jec2jem(const EdgeCoordinate &jec) {
 EdgeCoordinate MoveTableBuilder::jem2jec(const EdgeMask &jem,
                                          uint8_t &permNeeded) {
 
-  uint16_t mask0 = ((1 << 12) - 1) & ~jem.valid;
+  uint16_t mask0 = ((1 << nEdges) - 1) & ~jem.valid;
   uint16_t mask1 = removeMask(mask0, jem.face);
   uint16_t position =
       c12_4.mask2position[mask0] * C_8_4 + c8_4.mask2position[mask1];
   uint16_t entry = rec2sec[position];
   permNeeded = entry >> nSymEdgePosBits;
 
-  EdgeMask pjem = jem.permute(permNeeded, reflectBit);
-  uint16_t pMask0 = ((1 << 12) - 1) & ~pjem.valid;
+  EdgeMask pjem = jem.permute(permNeeded);
+  uint16_t pMask0 = ((1 << nEdges) - 1) & ~pjem.valid;
   uint16_t pFlip = removeMask(pMask0, pjem.flip);
   uint16_t pMask1 = removeMask(pMask0, pjem.face);
   uint16_t pPosition =
@@ -221,7 +220,7 @@ void MoveTableBuilder::buildCornerPermuteTable(
       uint32_t cidx = jcc.tableIndex();
 
       for (uint8_t perm = 0; perm < nJanusPerms; ++perm) {
-        CornerCoordinate pjcc = jcm2jcc(jcm.permute(perm, reflectBit));
+        CornerCoordinate pjcc = jcm2jcc(jcm.permute(perm));
         cornerPermuteTable(perm, cidx) = pjcc.tableIndex();
       }
     }
@@ -258,8 +257,7 @@ void MoveTableBuilder::buildEdgePermuteTable(
 
       for (uint8_t perm = 0; perm < nJanusPerms; ++perm) {
         uint8_t permNeeded;
-        EdgeCoordinate pjec =
-            jem2jec(jem.permute(perm, reflectBit), permNeeded);
+        EdgeCoordinate pjec = jem2jec(jem.permute(perm), permNeeded);
         edgePermuteTableX(perm, eidx) = pjec.tableIndex();
       }
     }
@@ -342,15 +340,19 @@ void MoveTableBuilder::buildSymmetryPermuteTable(
 
       AxesPole jap = ap;
 
-      // reflect about 0-1 plane
-      if (jperm & reflectBit) {
+      // reflect about 0-1 plane (without colorswap)
+      if (jperm & 0x10) {
         jap.pole[2] ^= 1;
       }
 
-      // rotate 180 degrees about 0 axis
+      // reflect about 0-1 plane (with colorswap)
+      if (jperm & 0x08) {
+        jap.pole[2] ^= 1;
+      }
+
+      // reflect about 0-2 plane
       if (jperm & 0x04) {
         jap.pole[1] ^= 1;
-        jap.pole[2] ^= 1;
       }
 
       // rotate 180 degrees about 2 axis

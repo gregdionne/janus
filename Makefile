@@ -5,8 +5,8 @@ BUILD_DIR ?= .build
 
 SRCJ := $(shell find src/janus -name \*.cpp)
 SRCU := $(shell find src/utils -name \*.cpp)
-SRCC := src/janus_cli.cpp
-SRCS := src/janus_server.cpp src/linserver.cpp
+SRCC := src/janus_cli.cpp src/janus_core.cpp
+SRCS := src/janus_server.cpp src/linserver.cpp src/janus_core.cpp
 OBJJ := $(SRCJ:%.cpp=$(BUILD_DIR)/%.o)
 OBJU := $(SRCU:%.cpp=$(BUILD_DIR)/%.o)
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)

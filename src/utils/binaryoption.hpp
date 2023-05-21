@@ -1,12 +1,12 @@
 // Copyright (C) 2021 Greg Dionne
 // Distributed under MIT License
-#ifndef UTILS_OPTION_HPP
-#define UTILS_OPTION_HPP
+#ifndef UTILS_BINARYOPTION_HPP
+#define UTILS_BINARYOPTION_HPP
 
-class Option {
+class BinaryOption {
 public:
-  Option(bool v, const char *on, const char *off, const char *summary,
-         const char *details)
+  BinaryOption(bool v, const char *on, const char *off, const char *summary,
+               const char *details)
       : value(v), onValue(on), offValue(off), helpSummary(summary),
         helpDetails(details) {}
 

@@ -11,7 +11,7 @@ It is based upon the research of Herbert Kociemba, Michael Reid, and Richard Kor
 Janus supports the quarter-turn and face-turn metrics.  The quarter-turn metric considers a move as a rotation of one of the six outer faces of the cube by 90&deg; in either a clockwise or counterclockwise direction. The face-turn metric (also called the half-turn metric) additionally allows a rotation by 180&deg;.
 
 ### Requirements
-Janus requires a hardware and operating system capable of allocating 44 GB of free contiguous RAM for an in-memory database.  However, a command line option can be used to use a smaller table (22 GB) at the expense of longer solution times.  
+Janus requires a hardware and operating system capable of allocating 22 GB of free contiguous RAM for an in-memory database.  However, a command line option can be used to use a smaller table (11 GB) at the expense of longer solution times.
 
 It was developed on a Mac mini (2018) with 64 GB 2667 MHz DDR4 RAM and a single 3.2 GHz 6-Core Intel Core i7.  Other hardware platforms may work, however these have not been tested.
 
@@ -21,7 +21,7 @@ It takes about 10 seconds to load the database from the development platform's s
 ### Database
 Janus creates a database for each move metric.  The database stores, for any arrangement of the cube, the number of moves (modulo three) required to completely solve any two opposing faces.  Once the database is created it is saved to disk for ready retrieval in the current directory.
 
-Some attempt has been made to reduce the size of the database by symmetry of the positions of the four identical edges of one face and the four identical edges of the other face.  Instead of the 34,650 ways to encode the positions of the edges (12C4 &#183; 8C4), checking for symmetry gives 4,425 positions (6, 6, 168, 4245 positions with 1-, 2-, 4-, and 8-way equivalent symmetric positions, respectively by any combination of rotation or inversion about the axes adjoining the opposing faces.  There are 2&#8312; ways to flip the eight edges, 8C4 ways to choose the positions of the four identical corners of one face and four identical corners of the other, and 3&#8311; ways to spin seven corners in-place where the last corner's spin is determined by the previous seven.  This gives a grand total of 4,425 &#183; 2&#8312; &#183; 8C4 &#183; 3&#8311; = 4,425 &#183; 256 &#183; 70 &#183; 2,187 = 173,420,352,000 positions in the table.
+Some attempt has been made to reduce the size of the database by symmetry of the positions of the four identical edges of one face and the four identical edges of the other face.  Instead of the 34,650 ways to encode the positions of the edges (12C4 &#183; 8C4), checking for symmetry gives 2,270 positions by any combination of color exchange, rotation, or inversion about the axes adjoining the opposing faces.  There are 2&#8312; ways to flip the eight edges, 8C4 ways to choose the positions of the four identical corners of one face and four identical corners of the other, and 3&#8311; ways to spin seven corners in-place where the last corner's spin is determined by the previous seven.  This gives a grand total of 2,270 &#183; 2&#8312; &#183; 8C4 &#183; 3&#8311; = 2,270 &#183; 256 &#183; 70 &#183; 2,187 = 88,963,660,000 positions in the table.
 
 <table>
 <tr><th>Quater-Turn Metric</th><th>Face-Turn Metric</th></tr>
@@ -31,22 +31,22 @@ Some attempt has been made to reduce the size of the database by symmetry of the
 |-----:|--------------------:|
 |     0|                    1|
 |     1|                    1|
-|     2|                   11|
-|     3|                   91|
-|     4|                  838|
-|     5|                7,638|
-|     6|               71,341|
-|     7|              662,712|
-|     8|          * 6,128,555|
-|     9|         * 56,276,874|
-|    10|        * 509,191,624|
-|    11|      * 4,364,095,656|
-|    12|     * 30,153,260,861|
-|    13|     * 95,810,497,440|
-|    14|       42,269,371,659|
-|    15|          250,786,650|
-|    16|                   55|
-| total|      173,420,352,000|
+|     2|                    7|
+|     3|                   52|
+|     4|                  439|
+|     5|                3,960|
+|     6|               36,830|
+|     7|              342,276|
+|     8|          * 3,158,664|
+|     9|         * 28,948,228|
+|    10|        * 261,585,278|
+|    11|      * 2,240,007,354|
+|    12|     * 15,465,617,053|
+|    13|     * 49,132,222,383|
+|    14|       21,701,952,883|
+|    15|          129,785,345|
+|    16|                   53|
+| total|       88,963,660,800|
 
 </td><td>
 
@@ -54,27 +54,27 @@ Some attempt has been made to reduce the size of the database by symmetry of the
 |-----:|--------------------:|
 |     0|                    1|
 |     1|                    2|
-|     2|                   22|
-|     3|                  250|
-|     4|                3,154|
-|     5|               40,599|
-|     6|              524,988|
-|     7|            6,773,484|
-|     8|         * 86,598,576|
-|     9|      * 1,077,325,010|
-|    10|     * 11,949,718,629|
-|    11|     * 77,921,914,446|
-|    12|       81,222,717,683|
-|    13|        1,154,735,140|
-|    14|                   26|
+|     2|                   15|
+|     3|                  143|
+|     4|                1,690|
+|     5|               21,116|
+|     6|              270,527|
+|     7|            3,478,755|
+|     8|         * 44,413,446|
+|     9|        * 552,212,765|
+|    10|      * 6,123,652,473|
+|    11|     * 39,937,075,250|
+|    12|       41,702,686,998|
+|    13|          559,847,602|
+|    14|                   20|
 |    15|                    0|
-| total|      173,420,352,000|
+| total|       88,963,660,800|
 |     *| (over-estimate)     |
 
 </td></tr> </table>
 
 ### &#274;n&#0257;r&#0275;s Database
-Janus can optionally build a smaller database.  Instead of storing the number of moves to completely solve two opposing faces, the database allows for an exchange of the central cubes in the opposing faces.  When solving the cube, Janus is unable to distinguish between a solved cube and a "four-spot" pattern by using the database alone.  To verify a solution, Janus additionally keeps track of the relative rotations used when solving each of the three opposing pairs of faces.  When compared to the regular database, above, the effective depth of the face-turn and quarter-turn metrics by about a half move.
+Janus can optionally build a smaller database.  Instead of storing the number of moves to completely solve two opposing faces, the database allows for an exchange of the central cubes in the opposing faces.  When solving the cube, Janus is unable to distinguish between a solved cube and a "four-spot" pattern by using the database alone.  To verify a solution, Janus additionally keeps track of a completely cube to validate solutions, throwing away any "four-spot" patterns.  When compared to the regular database, above, the effective depth of the face-turn and quarter-turn metrics by about a half move.
 
 &#274;n&#0257;r&#0275;s is the plural form of the Latin word, &#275;n&#0257;ris, meaning "without a nose."  As the Roman god Janus is often depicted with a head with two opposing faces, it was befitting to liken the center cubies to the noses of each face and to use Latin to specify table computation without the noses.
 <table>
@@ -86,22 +86,22 @@ Janus can optionally build a smaller database.  Instead of storing the number of
 |-----:|--------------------:|
 |     0|                    1|
 |     1|                    1|
-|     2|                   11|
-|     3|                   92|
-|     4|                  856|
-|     5|                7,647|
-|     6|               71,595|
-|     7|              665,323|
-|     8|          * 6,143,857|
-|     9|         * 56,181,329|
-|    10|        * 502,782,651|
-|    11|      * 4,139,642,775|
-|    12|     * 24,477,511,872|
-|    13|     * 49,740,643,498|
-|    14|        9,483,425,363|
-|    15|            7,909,383|
+|     2|                    7|
+|     3|                   53|
+|     4|                  449|
+|     5|                3,991|
+|     6|               37,222|
+|     7|              346,857|
+|     8|          * 3,200,720|
+|     9|         * 29,221,417|
+|    10|        * 261,238,084|
+|    11|      * 2,149,293,281|
+|    12|     * 12,699,941,273|
+|    13|     * 25,811,271,114|
+|    14|        4,933,936,657|
+|    15|            4,216,718|
 |    16|                    4|
-| total|       88,414,986,240|
+| total|       45,892,707,840|
 
 </td><td>
 
@@ -109,21 +109,21 @@ Janus can optionally build a smaller database.  Instead of storing the number of
 |-----:|--------------------:|
 |     0|                    1|
 |     1|                    2|
-|     2|                   23|
-|     3|                  243|
-|     4|                3,058|
-|     5|               38,740|
-|     6|              498,741|
-|     7|            6,391,361|
-|     8|           80,840,150|
-|     9|          983,980,165|
-|    10|       10,130,194,776|
-|    11|       49,793,425,015|
-|    12|       27,347,009,964|
-|    13|           72,603,988|
-|    14|                   13|
+|     2|                   16|
+|     3|                  142|
+|     4|                1,651|
+|     5|               20,330|
+|     6|              259,533|
+|     7|            3,316,216|
+|     8|         * 41,906,294|
+|     9|        * 509,946,612|
+|    10|      * 5,249,533,729|
+|    11|     * 25,818,613,423|
+|    12|       14,230,070,180|
+|    13|           39,039,706|
+|    14|                    9|
 |    15|                    0|
-| total|       88,414,986,240|
+| total|       45,892,707,840|
 |     *| (over-estimate)     |
 
 </td></tr> </table>
@@ -162,7 +162,7 @@ When you execute it for the first time it will attempt to make a database "depth
 
 ```
 $ janus
-reading depthTable-FTM.janus... 43,355,088,000 bytes read
+reading depthTable-FTM.janus... 22,240,915,200 bytes read
 Enter scramble in Singmaster notation (Ctrl+D to exit):
 ```
 
@@ -170,7 +170,7 @@ Enter your scramble and then press return (you'll probably need at least 17 move
 
 ```
 $ janus
-reading depthTable-FTM.janus... 43,355,088,000 bytes read
+reading depthTable-FTM.janus... 22,240,915,200 bytes read
 Enter scramble in Singmaster notation (Ctrl+D to exit):
 L B' L' F2 U F R2 U2 F U' F2 R2 F2 U' L2 U2 B' R'
 Solving Scramble: L B' L' F2 U F R2 U2 F U' F2 R2 F2 U' L2 U2 B' R'
@@ -225,7 +225,7 @@ as the first argument:
 
 ```
 $ janus -qtm "F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2"
-reading depthTable-QTM.janus... 43,355,088,000 bytes read
+reading depthTable-QTM.janus... 22,240,915,200 bytes read
 ```
 
 Janus uses "depthTable-QTM.janus" as the filename for the quater-turn metric.
@@ -235,7 +235,7 @@ If you wish to the smaller &#257;n&#275;r&#257s; database, add the "-enares" opt
 ```
 $ janus -enares "F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2"
 $ janus -qtm -enares "F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2"
-reading depthTable-QTM-enares.janus...22,103,746,560 bytes read
+reading depthTable-QTM-enares.janus...11,473,176,960 bytes read
 ```
 #### Solutions
 Janus attempts to find all minimal solutions.  To save time, Janus avoids "trivially equivalent" pairs of moves.
@@ -292,7 +292,7 @@ OPTIONS
 
  -qtm          Use the quater-turn metric.
 
- -enares       Use a reduced depth table of 22GB instead of 44GB.
+ -enares       Use a reduced depth table of 11GB instead of 22GB.
 
 EXAMPLE
 

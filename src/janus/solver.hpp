@@ -5,7 +5,7 @@
 
 #include "cubedepth.hpp"
 #include "depthtable.hpp"
-#include "movemetric.hpp"
+#include "fullcube.hpp"
 #include "movetable.hpp"
 #include "recurser.hpp"
 #include "worklist.hpp"
@@ -21,18 +21,16 @@ namespace Janus {
 
 class Solver {
 public:
-  Solver(MoveMetric moveMetric, const MoveTable *jmt,
+  Solver(const CLIOptions &options, const MoveTable *jmt,
          std::function<void(const std::string &)> console,
          std::function<bool(uint8_t *, std::size_t)> load,
          std::function<bool(const uint8_t *, std::size_t)> save)
       : moveTable(jmt), depthTable(std::make_unique<DepthTable>(
-                            moveMetric, jmt, console, load, save)),
-        recurser(Recurser::makeRecurser(moveMetric)),
-        GodsNumber(selectQH(moveMetric, GodsNumberQ, GodsNumberH)),
-        usefulDepth(selectAD(
-            jmt->getNaso(), selectQH(moveMetric, usefulDepthQL, usefulDepthHL),
-            selectQH(moveMetric, usefulDepthQF, usefulDepthHF))),
-        depthIncrement(selectQH(moveMetric, depthIncrementQ, depthIncrementH)),
+                            options, jmt, console, load, save)),
+        recurser(Recurser::makeRecurser(options)),
+        GodsNumber(selectGodsNumber(options)),
+        usefulDepth(selectUsefulDepth(options)),
+        depthIncrement(selectDepthIncrement(options)),
         homeCornerIndex(jmt->getHomeCornerIndex()),
         homeEdgeIndex(jmt->getHomeEdgeIndex()),
         homeCubeIndex({{homeCornerIndex, homeEdgeIndex, 32},
@@ -43,6 +41,7 @@ public:
   // solution is generated (useful for printing)
   void
   solve(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t cParity,
+        const FullCube &startingCube,
         std::function<void(uint8_t)> depthCallback,
         std::function<void(std::size_t, const Solution &)> solutionCallback,
         std::function<void(bool)> terminationCallback, bool asynchronously);
@@ -75,10 +74,7 @@ public:
            cIndex.z.corners == homeCornerIndex && //
            cIndex.x.edges == homeEdgeIndex &&     // check each edge
            cIndex.y.edges == homeEdgeIndex &&     //
-           cIndex.z.edges == homeEdgeIndex &&     //
-           (cIndex.x.symmetry & 1) == 0 &&        // check inversion-free
-           (cIndex.y.symmetry & 1) == 0 &&        // (needed only when
-           (cIndex.z.symmetry & 1) == 0;          // noses are equivalent)
+           cIndex.z.edges == homeEdgeIndex;       //
   }
 
 private:
@@ -152,18 +148,30 @@ private:
   const std::unique_ptr<Recurser> recurser;
 
   const uint8_t GodsNumber;
-  constexpr static uint8_t GodsNumberQ = 26;
-  constexpr static uint8_t GodsNumberH = 20;
+  uint8_t selectGodsNumber(const CLIOptions &options) {
+    const uint8_t GodsNumberQTM = 26;
+    const uint8_t GodsNumberFTM = 20;
+    return options.qtm.isEnabled() ? GodsNumberQTM : GodsNumberFTM;
+  }
 
   const uint8_t usefulDepth;
-  constexpr static uint8_t usefulDepthQL = 13;
-  constexpr static uint8_t usefulDepthHL = 12;
-  constexpr static uint8_t usefulDepthQF = 14;
-  constexpr static uint8_t usefulDepthHF = 13;
+  uint8_t selectUsefulDepth(const CLIOptions &options) {
+    const uint8_t usefulDepthQTME = 13;
+    const uint8_t usefulDepthFTME = 12;
+    const uint8_t usefulDepthQTM = 14;
+    const uint8_t usefulDepthFTM = 13;
+    return options.enares.isEnabled()
+               ? options.qtm.isEnabled() ? usefulDepthQTME : usefulDepthFTME
+           : options.qtm.isEnabled() ? usefulDepthQTM
+                                     : usefulDepthFTM;
+  }
 
   const uint8_t depthIncrement;
-  constexpr static uint8_t depthIncrementQ = 2;
-  constexpr static uint8_t depthIncrementH = 1;
+  uint8_t selectDepthIncrement(const CLIOptions &options) {
+    const uint8_t depthIncrementQTM = 2;
+    const uint8_t depthIncrementFTM = 1;
+    return options.qtm.isEnabled() ? depthIncrementQTM : depthIncrementFTM;
+  }
 
   // number of threads to use if std::thread::hardware_concurrency() returns 0
   constexpr static uint8_t nDefaultThreads = 18;
@@ -188,6 +196,14 @@ private:
 
   // callback when solver has completed
   std::function<void(std::size_t)> searchTerminationCallback = [](bool) {};
+
+  // the (fully specified) initial cube to solve
+  // this is useful under the "enares" condition where
+  // the noses of each Janus are missing.  Since the
+  // solver can't tell the difference between a solved
+  // state and a four-spot pattern without noses, something
+  // else must keep track of the full state of the cube
+  FullCube startingFullCube = FullCube::home();
 
   WorkList worklist;
 

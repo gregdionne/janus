@@ -64,18 +64,23 @@ struct EdgeMask {
   // 12 - 17: F2 R2 U2 B2 L2 D2 (half-turn moves)
   EdgeMask move(uint8_t twist) const;
 
-  // return a new mask after reflecting/rotating about
-  // the up-down axes in the following sequence:
-  //   bit 3:  reflect along z axis
-  //   bit 2:  rotate a half-turn around x axis
+  // return a new mask after reflecting/rotating/color swapping
+  // Only enares option uses bit 4.
+  //   bit 4:  reflect along z axis (without colorswap)
+  //   bit 3:  reflect along z axis (with colorswap)
+  //   bit 2:  reflect along y axis
   //   bit 1:  rotate a half-turn around z axis
   //   bit 0:  rotate a quarter-turn around z axis
-  EdgeMask permute(uint8_t permutation, uint8_t reflectBit) const;
+  EdgeMask permute(uint8_t permutation) const;
 
 private:
   // same as move(), but restricted to quater twists.
   // it calls the quarter twist twice for half-twists
   EdgeMask moveQuarterTwist(uint8_t twist) const;
+
+  // could be moved to global constants
+  static const uint8_t nEdges = 12;
+  static const uint8_t nQuarterTwists = 12;
 };
 
 } // namespace Janus

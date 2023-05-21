@@ -9,23 +9,13 @@
 #include <string>
 
 #include "janus/cube.hpp"
-#include "janus/options.hpp"
 #include "janus/strutils.hpp"
+#include "janus_core.hpp"
 
 void closeSocket();
 int createServer(const char *port, std::function<void()> callback);
 int readSocket(char *buf, int bufsiz);
 int writeSocket(const char *buf, int bufsiz);
-
-auto moveMetric = Janus::MoveMetric::FaceTurn;
-auto naso = Janus::Naso::Disparilis;
-
-const char *filename = nullptr;
-
-static const char nMoves = 18;
-static const char *moveString[] = {"F",  "R",  "U",  "B",  "L",  "D",
-                                   "F'", "R'", "U'", "B'", "L'", "D'",
-                                   "F2", "R2", "U2", "B2", "L2", "D2"};
 
 void console(const char *message) {
   printf("%s", message);
@@ -33,109 +23,13 @@ void console(const char *message) {
   writeSocket(message, strlen(message));
 }
 
-void console(const std::string &message) { console(message.c_str()); }
-
 void consoleStr(const std::string &message) { console(message.c_str()); }
+void console(const std::string &message) { consoleStr(message); }
 
-bool loadFile(uint8_t *data, std::size_t nBytes) {
+void consoleOut(const std::string &message) { console(message); }
 
-  std::FILE *fp = std::fopen(filename, "rb");
-
-  if (fp == NULL) {
-    // failed to open
-    std::perror(filename);
-    return false;
-  }
-
-  printf("reading %s... ", filename);
-  fflush(stdout);
-
-  // try reading it
-  std::size_t result = std::fread(data, 1, nBytes, fp);
-  fclose(fp);
-
-  printf("%s bytes read\n", Janus::to_commastring(result, 14).c_str());
-
-  if (result != nBytes) {
-    printf("incorrect number of bytes read from %s\n", filename);
-    printf("expected: %s\n", Janus::to_commastring(nBytes, 14).c_str());
-    return false;
-  }
-
-  return true;
-}
-
-bool saveFile(const uint8_t *data, std::size_t nBytes) {
-  std::FILE *fp = std::fopen(filename, "wb");
-
-  if (fp == NULL) {
-    std::perror(filename);
-    return false;
-  }
-
-  printf("writing %s... ", filename);
-  fflush(stdout);
-
-  std::size_t result = std::fwrite(data, 1, nBytes, fp);
-  fclose(fp);
-
-  printf("%s bytes written\n", Janus::to_commastring(result, 14).c_str());
-
-  // handle if write failed
-  if (result != nBytes) {
-    printf("incorrect number of bytes written to %s\n", filename);
-    printf("%s bytes written\n", Janus::to_commastring(result, 14).c_str());
-    printf("%s bytes expected\n", Janus::to_commastring(nBytes, 14).c_str());
-    if (std::remove(filename)) {
-      fprintf(stderr, "Couldn't remove incomplete file\n");
-      perror(filename);
-    }
-    return false;
-  }
-
-  return true;
-}
-
-void printNewDepth(std::size_t depth) {
-  console("searching depth " + std::to_string(depth) + "...\n");
-}
-
-void printSolution(std::size_t n, const Janus::Solution &solution) {
-  if (n == 1) {
-    auto nMoves = Janus::selectQH(
-        moveMetric,
-        std::accumulate(
-            solution.cbegin(), solution.cend(), static_cast<std::size_t>(0),
-            [](std::size_t sum, uint8_t m) {
-              return sum + 1 + static_cast<int>(m >= Janus::nQuarterTwists);
-            }),
-        solution.size());
-    auto adjective = Janus::selectQH(moveMetric, "quarter", "face");
-
-    console("minimal " + std::to_string(nMoves) + "-move (" + adjective +
-            " turn) solution(s) found:\n");
-  }
-  console("solution ");
-  console(std::to_string(n));
-  console(": ");
-  for (std::size_t i = 0; i < solution.size(); ++i) {
-    if (i + 1 < solution.size() && solution[i] % 3 == solution[i + 1] % 3) {
-      console("(");
-    }
-    console(moveString[solution[i]]);
-    if (i > 0 && solution[i - 1] % 3 == solution[i] % 3) {
-      console(")");
-    }
-    console(" ");
-  }
-  console("\n");
-}
-
-void searchTerminated(bool success) {
-  std::string msg = "search ";
-  msg += success ? "complete" : "aborted";
-  msg += '\n';
-  console(msg);
+void printSolutionNumber(std::size_t n) {
+  console("solution " + std::to_string(n) + ": ");
 }
 
 void unrecognized(char *str) {
@@ -149,31 +43,7 @@ void unrecognized(char *str) {
   console("enter \"help\" for help\n");
 }
 
-void move(char *moves, Janus::Cube &cube) {
-  std::size_t pos = 0;
-  while (pos < strlen(moves)) {
-    if (moves[pos] == ' ' || moves[pos] == '\n') {
-      ++pos;
-    } else {
-      for (int i = nMoves - 1; i >= -1; --i) {
-        if (i == -1) {
-          console("error: move: ");
-          unrecognized(moves + pos);
-          return;
-        } else if (!strncmp(moves + pos, moveString[i],
-                            strlen(moveString[i]))) {
-          cube.move(i);
-          pos += strlen(moveString[i]);
-          break;
-        }
-      }
-    }
-  }
-}
-
-void cmdMetric(const Janus::MoveMetric moveMetric) {
-  console(Janus::selectQH(moveMetric, "quater-turn\n", "face-turn\n"));
-}
+void cmdMetric(bool qtm) { console(qtm ? "quater-turn\n" : "face-turn\n"); }
 
 static const char *const cmdList[] = {
     "valid commands are \"help\", \"metric\", \"abort\", \"solve\", or "
@@ -211,17 +81,7 @@ void cmdHelp() {
 void cmdAbort(Janus::Cube &cube) { cube.reset(); }
 
 void cmdSolve(char *moves, Janus::Cube &cube) {
-  cube.reset();
-
-  // strip trailing '\n'
-  std::string tmpmoves = moves;
-  tmpmoves.pop_back();
-  console("solving scramble \"");
-  console(tmpmoves.c_str());
-  console("\"\n");
-
-  move(moves, cube);
-  cube.solve(&printNewDepth, &printSolution, &searchTerminated);
+  solveScramble(moves, cube, true);
 }
 
 void prompt() { console("ready\n"); }
@@ -299,8 +159,6 @@ void helpExample(const char *progname) {
 
 int main(int argc, char *argv[]) {
 
-  Janus::Options options;
-
   const auto progname = argv[0];
   auto arguments = options.parse(
       argc, argv, argUsage, [&progname]() { argDetails(progname); },
@@ -311,22 +169,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  filename = "depthTable-FTM.janus";
-
-  if (options.qtm.isEnabled()) {
-    moveMetric = Janus::MoveMetric::QuarterTurn;
-    filename = "depthTable-QTM.janus";
-  }
-
-  if (options.enares.isEnabled()) {
-    naso = Janus::Naso::Aequivalens;
-    filename = moveMetric == Janus::MoveMetric::QuarterTurn
-                   ? "depthTable-QTM-enares.janus"
-                   : "depthTable-FTM-enares.janus";
-  }
-
   printf("Initializing...\n");
-  Janus::Cube cube(moveMetric, naso, &consoleStr, &loadFile, &saveFile);
+  Janus::Cube cube(options, &consoleStr, &loadFile, &saveFile);
 
   createServer(arguments[0], [&cube]() -> void {
     cube.reset();
@@ -344,7 +188,7 @@ int main(int argc, char *argv[]) {
         if (!strncmp(buf, "help", 4)) {
           cmdHelp();
         } else if (!strncmp(buf, "metric", 6)) {
-          cmdMetric(moveMetric);
+          cmdMetric(options.qtm.isEnabled());
         } else if (!strncmp(buf, "abort", 5)) {
           cmdAbort(cube);
         } else if (!strncmp(buf, "solve", 5)) {

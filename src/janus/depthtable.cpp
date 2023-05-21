@@ -27,6 +27,8 @@ std::size_t DepthTable::rbuild(const MoveTable *moveTable, std::size_t cidx,
                                std::size_t eidx, uint8_t depth,
                                uint8_t currentDepth) {
 
+  std::size_t count = 0;
+
   std::size_t idx = fullIdx(cidx, eidx);
   uint8_t tableDepth = getDepth(idx);
 
@@ -35,10 +37,22 @@ std::size_t DepthTable::rbuild(const MoveTable *moveTable, std::size_t cidx,
       setDepthNonAtomically(idx, depth % 3);
       return 1;
     }
-    return 0;
-  }
 
-  std::size_t count = 0;
+    // ensure expansion of edge positions with 2-, 4-, and 8-fold symmetry
+    uint16_t eposition = eidx >> 8;
+    for (const auto &p : moveTable->equivalentEdgePermutationTable[eposition]) {
+      uint32_t epeidx = moveTable->edgePermuteTable(p, eidx);
+      uint32_t epcidx = moveTable->cornerPermuteTable(p, cidx);
+
+      std::size_t tidx = fullIdx(epcidx, epeidx);
+      if (getDepth(tidx) == 0x03) {
+        setDepthNonAtomically(tidx, depth % 3);
+        ++count;
+      }
+    }
+
+    return count;
+  }
 
   // only recurse if we match the correct depth
   if (tableDepth == (depth - currentDepth) % 3) {
@@ -58,16 +72,6 @@ std::size_t DepthTable::rbuild(const MoveTable *moveTable, std::size_t cidx,
 
       // recurse another depth with the permuted cube
       count += rbuild(moveTable, pcidx, peidx, depth, currentDepth - 1);
-
-      // ensure expansion of edge positions with 2-, 4-, and 8-fold symmetry
-      uint16_t eposition = peidx >> 8;
-      for (const auto &p :
-           moveTable->equivalentEdgePermutationTable[eposition]) {
-        uint32_t epeidx = moveTable->edgePermuteTable(p, peidx);
-        uint32_t epcidx = moveTable->cornerPermuteTable(p, pcidx);
-
-        count += rbuild(moveTable, epcidx, epeidx, depth, currentDepth - 1);
-      }
     }
   }
   return count;

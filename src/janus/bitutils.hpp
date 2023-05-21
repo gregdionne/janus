@@ -31,6 +31,8 @@ uint16_t nextIdenticalHammingWeight(uint16_t weight);
 //   quotient * divisor = dividend (modulo 2^32)
 uint32_t divide(uint32_t dividend, uint32_t divisor);
 
+// number of bits required to represent an (unsigned)
+// number.
 template <class T> T bit_width(T n) {
   // bump value
   T m = 0;

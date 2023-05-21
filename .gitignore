@@ -4,3 +4,4 @@ janus
 .build
 !janus/
 *.janus
+*.log

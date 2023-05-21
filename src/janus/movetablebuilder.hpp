@@ -5,12 +5,12 @@
 
 #include "array2d.hpp"
 #include "choosetable.hpp"
+#include "clioptions.hpp"
 #include "constants.hpp"
 #include "cornercoordinate.hpp"
 #include "edgecoordinate.hpp"
 #include "mask.hpp"
 #include "movetable.hpp"
-#include "naso.hpp"
 
 #include <memory>
 #include <vector>
@@ -20,7 +20,7 @@ namespace Janus {
 class MoveTableBuilder {
 public:
   // Builds rec2sec and sec2rec
-  MoveTableBuilder(Naso naso);
+  MoveTableBuilder(const CLIOptions &options);
 
   // constructs and returns the move table
   std::unique_ptr<MoveTable> build();
@@ -79,6 +79,9 @@ private:
   // symmetry.
   void buildTwistSymmetryTable(Array2D<uint8_t> &twistSymmetryTable);
 
+  // Command-line options
+  const CLIOptions &options;
+
   // conversions between corner bitmasks and coordinates
   CornerCoordinate jcm2jcc(const CornerMask &jcm);
   CornerMask jcc2jcm(const CornerCoordinate &jcc);
@@ -90,8 +93,6 @@ private:
   // conversions between edge bitmask and position (without flip)
   EdgeMask pos2jem(uint16_t regPosition);
   uint16_t jem2pos(EdgeMask pem);
-
-  Naso naso;
 
   constexpr static uint16_t nRegEdgePositions = C_12_4 * C_8_4;
   // conversions between "regular" and "symmetric" position coordinates
@@ -105,46 +106,55 @@ private:
   //    returns the regular position for the specified symmetricized
   //    edge position.  It is typically a stepping stone to create
   //    the position mask for an edge.
-  std::vector<uint16_t> sec2rec; // either 2256/4425 symmetric positions
+  std::vector<uint16_t> sec2rec; // either 1171/2270 symmetric positions
 
   // tables to convert between masks and coordinates
   ChooseTable c12_4 = ChooseTable(12, 4);
   ChooseTable c8_4 = ChooseTable(8, 4);
 
   // number of permutation bits for the given "naso" of Janus
-  //
-  // The aequivalens variant allows for reflection about the z axis
-  // independently of rotation of 180 degrees about the x axis.
-  // The disparilis variant couples them together.
-  constexpr static uint8_t nEdgePermBitsA = 4;
-  constexpr static uint8_t nEdgePermBitsD = 3;
+  // Only enares option uses bit 4.
+  //   bit 4:  reflect along z axis (without colorswap)
+  //   bit 3:  reflect along z axis (with colorswap)
+  //   bit 2:  reflect along y axis
+  //   bit 1:  rotate a half-turn around z axis
+  //   bit 0:  rotate a quarter-turn around z axis
+  uint8_t selectNEdgePermBits() {
+    const uint8_t nEdgePermBitsA = 5;
+    const uint8_t nEdgePermBitsD = 4;
+    return options.enares.isEnabled() ? nEdgePermBitsA : nEdgePermBitsD;
+  }
+
   const uint8_t nEdgePermBits;
   const uint8_t nJanusPerms;
-  const uint8_t reflectBit;
 
-  // when the aequivalens variant is used, only twelve bits
+  // when the enares option is used, only eleven bits
   // are needed to encode the 2,256 distinct symmetric edge
-  // positions.  Otherwise, thirteen bits are needed to encode
-  // when using the disparilis variant
+  // positions.  Otherwise, twelve bits are needed.
   const uint8_t nSymEdgePosBits;
-  constexpr static uint8_t nSymEdgePosBitsA = 12;
-  constexpr static uint8_t nSymEdgePosBitsD = 13;
+  uint8_t selectNSymEdgePosBits() {
+    const uint8_t nSymEdgePosBitsA = 11;
+    const uint8_t nSymEdgePosBitsD = 12;
+    return options.enares.isEnabled() ? nSymEdgePosBitsA : nSymEdgePosBitsD;
+  }
 
   // number of symmetries
   constexpr static uint8_t nCubeSyms = 48;
 
   // 2^8 ways to orient (flip) the lower and upper edges
   // we don't track the orientations of the "missing" edges
+  constexpr static uint16_t nEdges = 12;
   constexpr static uint16_t nEdgeFlips = 256;
 
   uint16_t nSymEdgePositions = 0; // sec2rec.size()
   uint32_t nSymEdgeCoords = 0;    // nSymEdgePositions * nEdgeFlips
 
   // corner index where corners are in "home" position with zero spin
-  uint32_t homeCornerIndex = 0; // set from constructor (value will be 20)
+  uint32_t homeCornerIndex = 0; // set from constructor? (value will be 20)
 
   // edge index where edges are in "root" position with no flips
-  uint32_t homeEdgeIndex = 0; // set in constructor (value will be 2224 or 3496)
+  uint32_t homeEdgeIndex =
+      0; // set in constructor? (value will be 2224 or 3496)
 };
 
 } // namespace Janus

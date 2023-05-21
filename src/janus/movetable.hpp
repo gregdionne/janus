@@ -5,26 +5,25 @@
 
 #include "array2d.hpp"
 #include "choosetable.hpp"
+#include "clioptions.hpp"
 #include "constants.hpp"
 #include "cornercoordinate.hpp" // only for nCornerCoords
 #include "cubeindex.hpp"
-#include "naso.hpp"
 
 namespace Janus {
 
 class MoveTable {
 public:
-  MoveTable(const Naso &janusNaso, uint8_t numJanusPerms,
-            uint8_t numEdgePermBits, uint16_t numSymEdgePositions,
-            uint32_t numSymEdgeCoords, uint8_t numCubeSyms, uint32_t homeCorner,
-            uint32_t homeEdge)
+  MoveTable(uint8_t numJanusPerms, uint8_t numEdgePermBits,
+            uint16_t numSymEdgePositions, uint32_t numSymEdgeCoords,
+            uint8_t numCubeSyms, uint32_t homeCorner, uint32_t homeEdge)
       : cornerTwistTable(nFaceTwists, nCornerCoords),
         edgeTwistTable(nFaceTwists, numSymEdgeCoords),
         cornerPermuteTable(numJanusPerms, nCornerCoords),
         edgePermuteTable(numJanusPerms, numSymEdgeCoords),
         symmetryPermuteTable(numJanusPerms, numCubeSyms),
         twistSymmetryTable(numCubeSyms, nFaceTwists),
-        equivalentEdgePermutationTable(numSymEdgePositions), naso(janusNaso),
+        equivalentEdgePermutationTable(numSymEdgePositions),
         nSymEdgeCoords(numSymEdgeCoords),
         edgePermMask((1 << numEdgePermBits) - 1),
         nEdgePermBits(numEdgePermBits), homeCornerIndex(homeCorner),
@@ -41,8 +40,8 @@ public:
   Array2D<uint32_t> cornerTwistTable;
 
   //   edge twist table returns a (permuted) edge index
-  //   shifted left by four bits.  the permutation needed
-  //   is encoded in the lower three or four bits
+  //   shifted left.  the permutation needed
+  //   is encoded in the lower four or five bits
   Array2D<uint32_t> edgeTwistTable;
 
   // tables that perform a permutation on the specified
@@ -62,8 +61,6 @@ public:
   // be reached when incrementally expanding the depth table.
   std::vector<std::vector<uint8_t>> equivalentEdgePermutationTable;
 
-  // used by depthtable
-  Naso getNaso() const { return naso; }
   uint32_t getNSymEdgeCoords() const { return nSymEdgeCoords; }
 
   uint8_t getEdgePermMask() const { return edgePermMask; }
@@ -76,14 +73,11 @@ private:
   // perform a move on a Janus index:
   Index move(const Index &janus, uint8_t twist) const;
 
-  // whether aequivalens or disparilis...
-  const Naso naso;
-
   const uint32_t nSymEdgeCoords; // nSymEdgePositions * nEdgeFlips
 
-  // Naso:                           Aequivalens Disparilis
-  const uint8_t edgePermMask;     //    0x0f       0x07
-  const uint8_t nEdgePermBits;    //       4          3
+  // naso:                            (enares)  (cum naso)
+  const uint8_t edgePermMask;     //    0x1f       0x0f
+  const uint8_t nEdgePermBits;    //       5          4
   const uint32_t homeCornerIndex; //      20         20
   const uint32_t homeEdgeIndex;   //    2224       3496
 };

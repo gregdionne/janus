@@ -4,7 +4,6 @@
 #define JANUS_DEPTHTABLE_HPP
 
 #include "constants.hpp"
-#include "movemetric.hpp"
 #include "movetable.hpp"
 
 #include <array>
@@ -29,24 +28,18 @@ namespace Janus {
 
 class DepthTable {
 public:
-  DepthTable(MoveMetric moveMetric, const MoveTable *jmt,
+  DepthTable(const CLIOptions &options, const MoveTable *jmt,
              std::function<void(const std::string &)> console,
              std::function<bool(uint8_t *, std::size_t)> load,
              std::function<bool(const uint8_t *, std::size_t)> save)
       : nSymCoords(static_cast<std::size_t>(nCornerCoords) *
                    static_cast<std::size_t>(jmt->getNSymEdgeCoords())),
         consoleOut(std::move(console)),
-        nTwistsPerMove(selectQH(moveMetric, nQuarterTwists, nFaceTwists)),
-        buildDepth(selectQH(moveMetric, buildDepthQ, buildDepthH)),
-        finalDepth(selectQH(moveMetric, finalDepthQ, finalDepthH)),
-        initCheckSum(
-            selectAD(jmt->getNaso(),
-                     selectQH(moveMetric, initCheckSumQL, initCheckSumHL),
-                     selectQH(moveMetric, initCheckSumQF, initCheckSumHF))),
-        initCheckProduct(selectAD(
-            jmt->getNaso(),
-            selectQH(moveMetric, initCheckProductQL, initCheckProductHL),
-            selectQH(moveMetric, initCheckProductQF, initCheckProductHF))),
+        nTwistsPerMove(selectNTwistsPerMove(options)),
+        buildDepth(selectBuildDepth(options)),
+        finalDepth(selectFinalDepth(options)),
+        initCheckSum(selectInitCheckSum(options)),
+        initCheckProduct(selectInitCheckProduct(options)),
         edgePermMask(jmt->getEdgePermMask()),
         nEdgePermBits(jmt->getNEdgePermBits()) {
 
@@ -179,14 +172,25 @@ private:
   //   12 when using quarter-turn metric
   //   18 when using face-turn metric
   const uint8_t nTwistsPerMove;
+  uint8_t selectNTwistsPerMove(const CLIOptions &options) {
+    return options.qtm.isEnabled() ? nQuarterTwists : nFaceTwists;
+  }
 
+  // when to switch to searching for empties...
   const uint8_t buildDepth;
-  constexpr static uint8_t buildDepthQ = 13;
-  constexpr static uint8_t buildDepthH = 11;
+  uint8_t selectBuildDepth(const CLIOptions &options) {
+    const uint8_t buildDepthQTM = 13;
+    const uint8_t buildDepthFTM = 11;
+    return options.qtm.isEnabled() ? buildDepthQTM : buildDepthFTM;
+  }
 
+  // last depth that can contain entries
   const uint8_t finalDepth;
-  constexpr static uint8_t finalDepthQ = 16;
-  constexpr static uint8_t finalDepthH = 14;
+  uint8_t selectFinalDepth(const CLIOptions &options) {
+    const uint8_t finalDepthQTM = 16;
+    const uint8_t finalDepthFTM = 14;
+    return options.qtm.isEnabled() ? finalDepthQTM : finalDepthFTM;
+  }
 
   // table checks
   //
@@ -196,18 +200,32 @@ private:
 
   //    validates order of table
   const uint32_t initCheckSum;
-  constexpr static uint32_t initCheckSumQF = 0x20A3021A;
-  constexpr static uint32_t initCheckSumHF = 0xF380E7D2;
-  constexpr static uint32_t initCheckSumQL = 0xC1FF0922;
-  constexpr static uint32_t initCheckSumHL = 0x50CBEBFE;
+  uint32_t selectInitCheckSum(const CLIOptions &options) {
+    const uint32_t initCheckSumQTME = 0xD4E76406;
+    const uint32_t initCheckSumFTME = 0x86F0B8E6;
+    const uint32_t initCheckSumQTM = 0x06B5B8AE;
+    const uint32_t initCheckSumFTM = 0x6E40A82A;
+    return options.enares.isEnabled()
+               ? options.qtm.isEnabled() ? initCheckSumQTME : initCheckSumFTME
+           : options.qtm.isEnabled() ? initCheckSumQTM
+                                     : initCheckSumFTM;
+  }
 
   //    validates values of table in any order
   const uint32_t initCheckProduct;
-  constexpr static uint32_t initCheckProductQF = 0xBC2142C6;
-  constexpr static uint32_t initCheckProductHF = 0x3C9F3CBA;
-  constexpr static uint32_t initCheckProductQL = 0xBCACF066;
-  constexpr static uint32_t initCheckProductHL = 0xD1C4CF72;
+  uint32_t selectInitCheckProduct(const CLIOptions &options) {
+    const uint32_t initCheckProductQTME = 0x700A019A;
+    const uint32_t initCheckProductFTME = 0x283A5F9E;
+    const uint32_t initCheckProductQTM = 0xBE3C5C8E;
+    const uint32_t initCheckProductFTM = 0x65DB01EE;
+    return options.enares.isEnabled() ? options.qtm.isEnabled()
+                                            ? initCheckProductQTME
+                                            : initCheckProductFTME
+           : options.qtm.isEnabled()  ? initCheckProductQTM
+                                      : initCheckProductFTM;
+  }
 
+  // permutation mask and number of bits copied from depthtable
   const uint8_t edgePermMask;
   const uint8_t nEdgePermBits;
 };

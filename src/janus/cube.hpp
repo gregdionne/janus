@@ -5,6 +5,7 @@
 
 #include <utility>
 
+#include "fullcube.hpp"
 #include "movetablebuilder.hpp"
 #include "solver.hpp"
 
@@ -13,19 +14,20 @@ namespace Janus {
 class Cube {
 public:
   // initialize tables and make a cube in it's solved state
-  Cube(MoveMetric moveMetric, Naso naso,
+  Cube(const CLIOptions &options,
        std::function<void(const std::string &)> console,
        std::function<bool(uint8_t *, std::size_t)> load,
        std::function<bool(const uint8_t *, std::size_t)> save)
-      : moveTable(MoveTableBuilder(naso).build()),
-        solver(std::make_unique<Solver>(moveMetric, moveTable.get(), console,
-                                        load, save)),
+      : moveTable(MoveTableBuilder(options).build()),
+        solver(std::make_unique<Solver>(options, moveTable.get(), console, load,
+                                        save)),
         cubeIndex(solver->homeCube()), cubeDepth(CubeDepth::home()),
         cubeParity(0) {}
 
   // reset the cube to its initial state
   void reset() {
     solver->cancel();
+    fullCube = FullCube::home();
     cubeIndex = solver->homeCube();
     cubeDepth = CubeDepth::home();
     cubeParity = 0;
@@ -34,6 +36,7 @@ public:
   // perform the specified move on the cube
   void move(uint8_t twist) {
     if (twist < nQuarterTwists) {
+      fullCube = fullCube.move(twist);
       cubeIndex = moveTable->move(cubeIndex, twist);
       cubeDepth = solver->redepth(cubeDepth, cubeIndex);
       cubeParity ^= 1;
@@ -51,9 +54,9 @@ public:
         std::function<void(std::size_t, const Solution &)> solutionCallback,
         std::function<void(bool)> finishedCallback, bool allowCancel = true) {
     solver->cancel();
-    solver->solve(cubeIndex, cubeDepth, cubeParity, std::move(depthCallback),
-                  std::move(solutionCallback), std::move(finishedCallback),
-                  allowCancel);
+    solver->solve(cubeIndex, cubeDepth, cubeParity, fullCube,
+                  std::move(depthCallback), std::move(solutionCallback),
+                  std::move(finishedCallback), allowCancel);
   }
 
 private:
@@ -68,6 +71,9 @@ private:
 
   // state of current depth
   CubeDepth cubeDepth;
+
+  // full state of cube
+  FullCube fullCube = FullCube::home();
 
   // state of parity
   uint8_t cubeParity;

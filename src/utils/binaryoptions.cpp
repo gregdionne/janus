@@ -1,6 +1,6 @@
 // Copyright (C) 2021 Greg Dionne
 // Distributed under MIT License
-#include "options.hpp"
+#include "binaryoptions.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -11,7 +11,8 @@
 
 namespace utils {
 
-void Options::usage(const char *progname, void (*argUsage)()) const {
+void BinaryOptions::usage(const char *progname,
+                          const std::function<void()> &argUsage) const {
   fprintf(stderr, "usage: %s -help\n", progname);
   fprintf(stderr, "       %s -help <option>\n", progname);
   int n = fprintf(stderr, "       %s", progname);
@@ -43,7 +44,7 @@ void Options::usage(const char *progname, void (*argUsage)()) const {
   argUsage();
 }
 
-void Options::helpOptionSummary(const Option *option) {
+void BinaryOptions::helpOptionSummary(const BinaryOption *option) {
   if (option->onSwitch()) {
     fprintf(stderr, " -%-12s", option->onSwitch());
   }
@@ -55,14 +56,14 @@ void Options::helpOptionSummary(const Option *option) {
   fprintf(stderr, "\n");
 }
 
-void Options::helpOptions() const {
+void BinaryOptions::helpOptions() const {
   fprintf(stderr, "OPTIONS\n\n");
   for (const auto &option : table) {
     helpOptionSummary(option);
   }
 }
 
-void Options::helpOptionDetails(const Option *option) const {
+void BinaryOptions::helpOptionDetails(const BinaryOption *option) const {
   const char *text = option->details();
 
   do {
@@ -85,7 +86,7 @@ void Options::helpOptionDetails(const Option *option) const {
   } while (*text);
 }
 
-void Options::helpTopic(const char *progname, const char *target) const {
+void BinaryOptions::helpTopic(const char *progname, const char *target) const {
   // skip any leading '-'
   if (target[0] == '-') {
     ++target;
@@ -105,7 +106,7 @@ void Options::helpTopic(const char *progname, const char *target) const {
   exit(1);
 }
 
-Option *Options::findOption(const char *arg) {
+BinaryOption *BinaryOptions::findOption(const char *arg) {
   if (auto *opt = findOnSwitch(arg)) {
     return opt;
   }
@@ -115,31 +116,35 @@ Option *Options::findOption(const char *arg) {
 }
 
 // convert iterator idiom to pointer idiom
-Option *Options::findOnSwitch(const char *arg) {
-  auto op = std::find_if(table.begin(), table.end(), [&arg](const Option *o) {
-    return arg && arg[0] && o->onSwitch() && !strcmp(arg + 1, o->onSwitch());
-  });
+BinaryOption *BinaryOptions::findOnSwitch(const char *arg) {
+  auto op =
+      std::find_if(table.begin(), table.end(), [&arg](const BinaryOption *o) {
+        return arg && arg[0] && o->onSwitch() &&
+               !strcmp(arg + 1, o->onSwitch());
+      });
 
   return op == table.end() ? nullptr : *op;
 }
 
-Option *Options::findOffSwitch(const char *arg) {
-  auto op = std::find_if(table.begin(), table.end(), [&arg](const Option *o) {
-    return arg && arg[0] && o->offSwitch() && !strcmp(arg + 1, o->offSwitch());
-  });
+BinaryOption *BinaryOptions::findOffSwitch(const char *arg) {
+  auto op =
+      std::find_if(table.begin(), table.end(), [&arg](const BinaryOption *o) {
+        return arg && arg[0] && o->offSwitch() &&
+               !strcmp(arg + 1, o->offSwitch());
+      });
 
   return op == table.end() ? nullptr : *op;
 }
 
 std::vector<const char *>
-Options::parse(int argc, const char *const argv[], void (*argUsage)(),
-               const std::function<void()> &argDetails,
-               const std::function<void()> &helpExample) {
+BinaryOptions::parse(int argc, const char *const argv[],
+                     const std::function<void()> &argUsage,
+                     const std::function<void()> &argDetails,
+                     const std::function<void()> &helpExample) {
 
   const char *progname = argv[0];
   if (argc == 1) {
-    usage(progname, argUsage);
-    exit(0);
+    return {};
   }
 
   if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-help")) {

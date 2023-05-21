@@ -4,8 +4,8 @@
 
 namespace Janus {
 
-std::unique_ptr<Recurser> Recurser::makeRecurser(MoveMetric moveMetric) {
-  return moveMetric == MoveMetric::QuarterTurn
+std::unique_ptr<Recurser> Recurser::makeRecurser(const CLIOptions &options) {
+  return options.qtm.isEnabled()
              ? std::unique_ptr<Recurser>(std::make_unique<RecurserQTM>())
              : std::unique_ptr<Recurser>(std::make_unique<RecurserFTM>());
 }

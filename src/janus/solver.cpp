@@ -12,9 +12,12 @@ namespace Janus {
 // invoke user's callback when any solution is found
 void Solver::solve(
     const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t cParity,
-    std::function<void(uint8_t)> depthCallback,
+    const FullCube &startingCube, std::function<void(uint8_t)> depthCallback,
     std::function<void(std::size_t, const Solution &)> slnCallback,
     std::function<void(bool)> terminationCallback, bool asynchronously) {
+
+  // copy over the starting cube
+  startingFullCube = startingCube;
 
   // overwrite defaults with provided callbacks
   newDepthCallback = depthCallback;
@@ -69,13 +72,21 @@ uint8_t Solver::janusDepth(const Index &janus) const {
 bool Solver::checkWork(const CubeIndex &cIndex, Solution &work) {
 
   if (isSolved(cIndex)) {
+    auto fullCube = startingFullCube;
 
-    std::lock_guard<std::mutex> lock(solutionMutex);
+    for (auto &twist : work) {
+      fullCube = fullCube.move(twist);
+    }
 
-    solutions.push_back(work);
-    newSolutionCallback(solutions.size(), work);
+    if (fullCube.isSolved()) {
 
-    return true;
+      std::lock_guard<std::mutex> lock(solutionMutex);
+
+      solutions.push_back(work);
+      newSolutionCallback(solutions.size(), work);
+
+      return true;
+    }
   }
 
   return false;

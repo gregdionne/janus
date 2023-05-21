@@ -3,8 +3,8 @@
 #ifndef JANUS_RECURSER_HPP
 #define JANUS_RECURSER_HPP
 
+#include "clioptions.hpp"
 #include "cubedepth.hpp"
-#include "movemetric.hpp"
 #include "worklist.hpp"
 
 #include <memory>
@@ -31,7 +31,7 @@ public:
                                       const CubeDepth &cDepth, uint8_t depth,
                                       Solution &work)) = 0;
   // utility creation
-  static std::unique_ptr<Recurser> makeRecurser(MoveMetric moveMetric);
+  static std::unique_ptr<Recurser> makeRecurser(const CLIOptions &options);
 };
 
 class RecurserQTM : public Recurser {
