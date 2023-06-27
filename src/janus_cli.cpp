@@ -35,6 +35,11 @@ void validMoves() {
 
 void argDetails() {
   fprintf(stderr, "DESCRIPTION\n\n");
+  fprintf(stderr, " Janus reports all optimal solutions for one (or more)\n");
+  fprintf(stderr, " sequence of moves of the Rubik's cube.\n\n");
+  fprintf(stderr, " When executed for the first time for a given metric\n");
+  fprintf(stderr, " and depth table size, it attempts to save a database\n");
+  fprintf(stderr, " in the current working directory.\n\n");
   fprintf(stderr, " If moves are not supplied as a quoted string,\n");
   fprintf(stderr, " then they are repeatedly read from the standard input\n");
   fprintf(stderr, " until an end-of-file is encountered\n\n");
@@ -42,10 +47,13 @@ void argDetails() {
 }
 
 void helpExample(const char *progname) {
-  fprintf(stderr, "EXAMPLE\n\n");
+  fprintf(stderr, "EXAMPLES\n\n");
   fprintf(stderr,
           " %s \"L B' L' F2 U F R2 U2 F U' F2 R2 F2 U' L2 U2 B' R'\"\n\n",
           progname);
+  fprintf(stderr, " %s < tests/benbotto.txt\n\n", progname);
+  fprintf(stderr, " %s -help enares\n\n", progname);
+  fprintf(stderr, " %s -help qtm\n\n", progname);
 }
 
 // prompt user for input when stdin is a terminal

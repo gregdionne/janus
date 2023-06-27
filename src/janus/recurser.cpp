@@ -10,11 +10,10 @@ std::unique_ptr<Recurser> Recurser::makeRecurser(const CLIOptions &options) {
              : std::unique_ptr<Recurser>(std::make_unique<RecurserFTM>());
 }
 
-bool RecurserFTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                       uint8_t depth, Solution &work, Solver *solver,
-                       bool (Solver::*f)(const CubeIndex &cIndex,
-                                         const CubeDepth &cDepth, uint8_t depth,
-                                         Solution &work)) {
+bool RecurserFTM::leaf(const JanusCube &janusCube, uint8_t depth,
+                       Solution &work, Solver *solver,
+                       bool (Solver::*f)(const JanusCube &janusCube,
+                                         uint8_t depth, Solution &work)) {
 
   // fetch last move
   uint8_t lastTwist = work.back();
@@ -32,8 +31,7 @@ bool RecurserFTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
     // a F, R or U twist immediately after a B, L or D twist, respectively
     if (lastTwist % 6 != twist % 6 && lastTwist % 3 != twist % 6) {
 
-      foundSolution |=
-          solver->recurseOne(cIndex, cDepth, depth, work, twist, f);
+      foundSolution |= solver->recurseOne(janusCube, depth, work, twist, f);
     }
   }
 
@@ -43,12 +41,10 @@ bool RecurserFTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
   return foundSolution;
 }
 
-bool RecurserFTM::root(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                       uint8_t depth, Solution &work, Solver *solver,
-                       bool (Solver::*f)(const CubeIndex &cIndex,
-                                         const CubeDepth &cDepth, uint8_t depth,
-                                         Solution &work)) {
-
+bool RecurserFTM::root(const JanusCube &janusCube, uint8_t depth,
+                       Solution &work, Solver *solver,
+                       bool (Solver::*f)(const JanusCube &janusCube,
+                                         uint8_t depth, Solution &work)) {
   // Expect failure
   bool foundSolution = false;
 
@@ -58,7 +54,7 @@ bool RecurserFTM::root(const CubeIndex &cIndex, const CubeDepth &cDepth,
   // for each move
   for (uint8_t twist = 0; twist < nFaceTwists; ++twist) {
 
-    foundSolution |= solver->recurseOne(cIndex, cDepth, depth, work, twist, f);
+    foundSolution |= solver->recurseOne(janusCube, depth, work, twist, f);
   }
 
   // backtrack
@@ -67,12 +63,10 @@ bool RecurserFTM::root(const CubeIndex &cIndex, const CubeDepth &cDepth,
   return foundSolution;
 }
 
-bool RecurserQTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                       uint8_t depth, Solution &work, Solver *solver,
-                       bool (Solver::*f)(const CubeIndex &cIndex,
-                                         const CubeDepth &cDepth, uint8_t depth,
-                                         Solution &work)) {
-
+bool RecurserQTM::leaf(const JanusCube &janusCube, uint8_t depth,
+                       Solution &work, Solver *solver,
+                       bool (Solver::*f)(const JanusCube &janusCube,
+                                         uint8_t depth, Solution &work)) {
   // fetch last move
   uint8_t lastTwist = work.back();
 
@@ -89,8 +83,7 @@ bool RecurserQTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
     // a F, R or U twist immediately after a B, L or D twist, respectively
     if (lastTwist % 6 != twist % 6 && lastTwist % 3 != twist % 6) {
 
-      foundSolution |=
-          solver->recurseOne(cIndex, cDepth, depth, work, twist, f);
+      foundSolution |= solver->recurseOne(janusCube, depth, work, twist, f);
     }
   }
 
@@ -102,8 +95,7 @@ bool RecurserQTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
       // a F, R or U twist immediately after a B, L or D twist, respectively
       if (lastTwist % 6 != twist % 6 && lastTwist % 3 != twist % 6) {
 
-        foundSolution |=
-            solver->recurseTwo(cIndex, cDepth, depth, work, twist, f);
+        foundSolution |= solver->recurseTwo(janusCube, depth, work, twist, f);
       }
     }
   }
@@ -114,12 +106,10 @@ bool RecurserQTM::leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
   return foundSolution;
 }
 
-bool RecurserQTM::root(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                       uint8_t depth, Solution &work, Solver *solver,
-                       bool (Solver::*f)(const CubeIndex &cIndex,
-                                         const CubeDepth &cDepth, uint8_t depth,
-                                         Solution &work)) {
-
+bool RecurserQTM::root(const JanusCube &janusCube, uint8_t depth,
+                       Solution &work, Solver *solver,
+                       bool (Solver::*f)(const JanusCube &janusCube,
+                                         uint8_t depth, Solution &work)) {
   // Expect failure
   bool foundSolution = false;
 
@@ -129,13 +119,12 @@ bool RecurserQTM::root(const CubeIndex &cIndex, const CubeDepth &cDepth,
   // for each quarter twist
   for (uint8_t twist = 0; twist < nQuarterTwists; ++twist) {
 
-    foundSolution |= solver->recurseOne(cIndex, cDepth, depth, work, twist, f);
+    foundSolution |= solver->recurseOne(janusCube, depth, work, twist, f);
   }
   // for each half twist
   if (depth > 1) {
     for (uint8_t twist = nQuarterTwists; twist < nFaceTwists; ++twist) {
-      foundSolution |=
-          solver->recurseTwo(cIndex, cDepth, depth, work, twist, f);
+      foundSolution |= solver->recurseTwo(janusCube, depth, work, twist, f);
     }
   }
 

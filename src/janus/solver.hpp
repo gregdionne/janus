@@ -6,6 +6,7 @@
 #include "cubedepth.hpp"
 #include "depthtable.hpp"
 #include "fullcube.hpp"
+#include "januscube.hpp"
 #include "movetable.hpp"
 #include "recurser.hpp"
 #include "worklist.hpp"
@@ -40,11 +41,14 @@ public:
   // solve the cube, with a user callback whenever a new
   // solution is generated (useful for printing)
   void
-  solve(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t cParity,
+  solve(uint8_t cParity, const JanusCube &janusCube,
         const FullCube &startingCube,
         std::function<void(uint8_t)> depthCallback,
         std::function<void(std::size_t, const Solution &)> solutionCallback,
         std::function<void(bool)> terminationCallback, bool asynchronously);
+
+  // move with table
+  JanusCube move(const JanusCube &janusCube, uint8_t twist) const;
 
   // returns an adjusted depth from the specified index
   CubeDepth redepth(const CubeDepth &cDepth, const CubeIndex &cIndex) const;
@@ -53,17 +57,15 @@ public:
   void cancel();
 
   // perform a single move...
-  bool recurseOne(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                  uint8_t depth, Solution &work, uint8_t twist,
-                  bool (Solver::*f)(const CubeIndex &cIndex,
-                                    const CubeDepth &cDepth, uint8_t depth,
+  bool recurseOne(const JanusCube &janusCube, uint8_t depth, Solution &work,
+                  uint8_t twist,
+                  bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
                                     Solution &work));
 
   // perform a half-twist counting each one twice...
-  bool recurseTwo(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                  uint8_t depth, Solution &work, uint8_t twist,
-                  bool (Solver::*f)(const CubeIndex &cIndex,
-                                    const CubeDepth &cDepth, uint8_t depth,
+  bool recurseTwo(const JanusCube &janusCube, uint8_t depth, Solution &work,
+                  uint8_t twist,
+                  bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
                                     Solution &work));
 
   CubeIndex homeCube() const { return homeCubeIndex; }
@@ -97,8 +99,7 @@ private:
   // 2.  performs the generated move
   // 3.  adds the move to the working solution and
   // 4.  calls itself with the new move and decremented depth.
-  bool tableSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                  uint8_t depth, Solution &work);
+  bool tableSolve(const JanusCube &janusCube, uint8_t depth, Solution &work);
 
   // checks to see if it can be solved via the table, and calls
   // tableSolve if so.
@@ -109,26 +110,24 @@ private:
   // 2.  performs the generated move
   // 3.  adds the move to the working solution and
   // 4.  calls itself with the new move and decremented depth.
-  bool trialSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                  uint8_t depth, Solution &work);
+  bool trialSolve(const JanusCube &janusCube, uint8_t depth, Solution &work);
 
   // solve the work list
   bool solveWorkList();
 
   // Make the work list, adding to it when at the specified depth
-  bool makeWorkList(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                    uint8_t depth, Solution &work);
+  bool makeWorkList(const JanusCube &janusCube, uint8_t depth, Solution &work);
 
-  void rootMakeWorkList(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                        uint8_t depth, Solution &work);
+  void rootMakeWorkList(const JanusCube &janusCube, uint8_t depth,
+                        Solution &work);
 
   // Solve the cube within the number of moves specified by depth.
-  bool rootTableSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                      uint8_t depth, Solution &work);
-  bool rootTrialSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                      uint8_t depth, Solution &work);
-  bool rootThreadSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                       uint8_t depth, Solution &work);
+  bool rootTableSolve(const JanusCube &janusCube, uint8_t depth,
+                      Solution &work);
+  bool rootTrialSolve(const JanusCube &janusCube, uint8_t depth,
+                      Solution &work);
+  bool rootThreadSolve(const JanusCube &janusCube, uint8_t depth,
+                       Solution &work);
 
   // Fetches number of threads to use when solving
   static unsigned int nRootThreads();
@@ -137,10 +136,10 @@ private:
   //   rootTableSolve is invoked if depth is within the useful table depth
   //   rootTrialSolve is otherwise invoked if too small for multithreading
   //   rootThreadSolve is invoked if big enough to do threading
-  bool solve(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t depth);
+  bool solve(const JanusCube &janusCube, uint8_t depth);
 
   // Search the cube incrementing from a depth of zero to God's number
-  void search(CubeIndex cIndex, CubeDepth cDepth, uint8_t cParity);
+  void search(const JanusCube &janusCube, uint8_t cParity);
 
   // tables
   const MoveTable *moveTable;

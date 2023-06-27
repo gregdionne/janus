@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "fullcube.hpp"
+#include "januscube.hpp"
 #include "movetablebuilder.hpp"
 #include "solver.hpp"
 
@@ -21,15 +22,13 @@ public:
       : moveTable(MoveTableBuilder(options).build()),
         solver(std::make_unique<Solver>(options, moveTable.get(), console, load,
                                         save)),
-        cubeIndex(solver->homeCube()), cubeDepth(CubeDepth::home()),
-        cubeParity(0) {}
+        janusCube{JanusCube::home(solver.get())}, cubeParity(0) {}
 
   // reset the cube to its initial state
   void reset() {
     solver->cancel();
     fullCube = FullCube::home();
-    cubeIndex = solver->homeCube();
-    cubeDepth = CubeDepth::home();
+    janusCube = JanusCube::home(solver.get());
     cubeParity = 0;
   }
 
@@ -37,8 +36,7 @@ public:
   void move(uint8_t twist) {
     if (twist < nQuarterTwists) {
       fullCube = fullCube.move(twist);
-      cubeIndex = moveTable->move(cubeIndex, twist);
-      cubeDepth = solver->redepth(cubeDepth, cubeIndex);
+      janusCube = janusCube.move(solver.get(), moveTable.get(), twist);
       cubeParity ^= 1;
     } else {
       move(twist - nQuarterTwists);
@@ -54,9 +52,9 @@ public:
         std::function<void(std::size_t, const Solution &)> solutionCallback,
         std::function<void(bool)> finishedCallback, bool allowCancel = true) {
     solver->cancel();
-    solver->solve(cubeIndex, cubeDepth, cubeParity, fullCube,
-                  std::move(depthCallback), std::move(solutionCallback),
-                  std::move(finishedCallback), allowCancel);
+    solver->solve(cubeParity, janusCube, fullCube, std::move(depthCallback),
+                  std::move(solutionCallback), std::move(finishedCallback),
+                  allowCancel);
   }
 
 private:
@@ -66,11 +64,8 @@ private:
   // solver
   std::unique_ptr<Solver> solver;
 
-  // state of current cube
-  CubeIndex cubeIndex;
-
-  // state of current depth
-  CubeDepth cubeDepth;
+  // current cube
+  JanusCube janusCube;
 
   // full state of cube
   FullCube fullCube = FullCube::home();

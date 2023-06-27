@@ -1,8 +1,7 @@
 #ifndef JANUS_WORKLIST
 #define JANUS_WORKLIST
 
-#include "cubedepth.hpp"
-#include "cubeindex.hpp"
+#include "januscube.hpp"
 
 #include <deque>
 #include <mutex>
@@ -12,8 +11,7 @@ namespace Janus {
 typedef std::vector<uint8_t> Solution;
 
 struct WorkItem {
-  CubeIndex cubeIndex;
-  CubeDepth cubeDepth;
+  JanusCube janusCube;
   Solution work;
   uint8_t depth;
 };

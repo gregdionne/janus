@@ -11,8 +11,8 @@ namespace Janus {
 // optimally solve the specified cube and return the solutions
 // invoke user's callback when any solution is found
 void Solver::solve(
-    const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t cParity,
-    const FullCube &startingCube, std::function<void(uint8_t)> depthCallback,
+    uint8_t cParity, const JanusCube &janusCube, const FullCube &startingCube,
+    std::function<void(uint8_t)> depthCallback,
     std::function<void(std::size_t, const Solution &)> slnCallback,
     std::function<void(bool)> terminationCallback, bool asynchronously) {
 
@@ -29,10 +29,10 @@ void Solver::solve(
 
   if (!asynchronously) {
     // wait for search to complete
-    search(cIndex, cDepth, cParity);
+    search(janusCube, cParity);
   } else {
     // search without waiting
-    supervisor = std::thread(&Solver::search, this, cIndex, cDepth, cParity);
+    supervisor = std::thread(&Solver::search, this, janusCube, cParity);
   }
 }
 
@@ -47,6 +47,12 @@ void Solver::cancel() {
 
   // clear any cancellation request
   canceling = false;
+}
+
+JanusCube Solver::move(const JanusCube &janusCube, uint8_t twist) const {
+  CubeIndex trialCube = moveTable->move(janusCube.index, twist);
+  CubeDepth trialDepth = redepth(janusCube.depth, trialCube);
+  return {trialCube, trialDepth};
 }
 
 // returns an adjusted depth from the specified index
@@ -92,38 +98,33 @@ bool Solver::checkWork(const CubeIndex &cIndex, Solution &work) {
   return false;
 }
 
-bool Solver::recurseOne(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                        uint8_t depth, Solution &work, uint8_t twist,
-                        bool (Solver::*f)(const CubeIndex &cIndex,
-                                          const CubeDepth &cDepth,
+bool Solver::recurseOne(const JanusCube &janusCube, uint8_t depth,
+                        Solution &work, uint8_t twist,
+                        bool (Solver::*f)(const JanusCube &janusCube,
                                           uint8_t depth, Solution &work)) {
   // record the move
   work.back() = twist;
 
   // make a trial cube with the move
-  CubeIndex trialCube = moveTable->move(cIndex, twist);
-  CubeDepth trialDepth = redepth(cDepth, trialCube);
+  JanusCube trialCube = move(janusCube, twist);
 
-  return (this->*f)(trialCube, trialDepth, depth - 1, work);
+  return (this->*f)(trialCube, depth - 1, work);
 }
 
-bool Solver::recurseTwo(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                        uint8_t depth, Solution &work, uint8_t twist,
-                        bool (Solver::*f)(const CubeIndex &cIndex,
-                                          const CubeDepth &cDepth,
+bool Solver::recurseTwo(const JanusCube &janusCube, uint8_t depth,
+                        Solution &work, uint8_t twist,
+                        bool (Solver::*f)(const JanusCube &janusCube,
                                           uint8_t depth, Solution &work)) {
   // record the move
   work.back() = twist;
 
   // make a temp cube with the first quarter turn
-  CubeIndex tIndex = moveTable->move(cIndex, twist - nQuarterTwists);
-  CubeDepth tDepth = redepth(cDepth, tIndex);
+  JanusCube tempCube = move(janusCube, twist - nQuarterTwists);
 
   // make a trial cube with the second quarter turn
-  CubeIndex trialCube = moveTable->move(tIndex, twist - nQuarterTwists);
-  CubeDepth trialDepth = redepth(tDepth, trialCube);
+  JanusCube trialCube = move(tempCube, twist - nQuarterTwists);
 
-  return (this->*f)(trialCube, trialDepth, depth - 2, work);
+  return (this->*f)(trialCube, depth - 2, work);
 }
 
 // table solver.
@@ -132,20 +133,20 @@ bool Solver::recurseTwo(const CubeIndex &cIndex, const CubeDepth &cDepth,
 // position is too far, it exits early.  If the current depth
 // is zero and the table is solved, it adds an empty solution
 // to the solution list and invokes the newSolutionCallback
-bool Solver::tableSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                        uint8_t depth, Solution &work) {
+bool Solver::tableSolve(const JanusCube &janusCube, uint8_t depth,
+                        Solution &work) {
 
   // leave if we can't satisfy the depth requirement
-  if (cDepth.tooFar(depth)) {
+  if (janusCube.depth.tooFar(depth)) {
     return false;
   }
 
   // no more moves left?
   if (depth == 0) {
-    return checkWork(cIndex, work);
+    return checkWork(janusCube.index, work);
   }
 
-  return recurser->leaf(cIndex, cDepth, depth, work, this, &Solver::tableSolve);
+  return recurser->leaf(janusCube, depth, work, this, &Solver::tableSolve);
 }
 
 // solve by trial and error...
@@ -155,12 +156,12 @@ bool Solver::tableSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
 // 2.  perform the generated move
 // 3.  add the move to the working solution and
 // 4.  call solve() with the new move and decremented depth.
-bool Solver::trialSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                        uint8_t depth, Solution &work) {
+bool Solver::trialSolve(const JanusCube &janusCube, uint8_t depth,
+                        Solution &work) {
 
   // invoke table if within useful depth
   if (depth < usefulDepth) {
-    return tableSolve(cIndex, cDepth, depth, work);
+    return tableSolve(janusCube, depth, work);
   }
 
   // leave if canceling
@@ -168,52 +169,51 @@ bool Solver::trialSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
     return false;
   }
 
-  return recurser->leaf(cIndex, cDepth, depth, work, this, &Solver::trialSolve);
+  return recurser->leaf(janusCube, depth, work, this, &Solver::trialSolve);
 }
 
 bool Solver::solveWorkList() {
   bool found = false;
   WorkItem item;
   while (!canceling && worklist.pop(item)) {
-    found |= trialSolve(item.cubeIndex, item.cubeDepth, item.depth, item.work);
+    found |= trialSolve(item.janusCube, item.depth, item.work);
   }
   return found && !canceling;
 }
 
-bool Solver::makeWorkList(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                          uint8_t depth, Solution &work) {
+bool Solver::makeWorkList(const JanusCube &janusCube, uint8_t depth,
+                          Solution &work) {
 
   if (depth < threadDepth) {
-    worklist.push({cIndex, cDepth, work, depth});
+    worklist.push({janusCube, work, depth});
     return false;
   }
 
-  return recurser->leaf(cIndex, cDepth, depth, work, this,
-                        &Solver::makeWorkList);
+  return recurser->leaf(janusCube, depth, work, this, &Solver::makeWorkList);
 }
 
-bool Solver::rootTableSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                            uint8_t depth, Solution &work) {
+bool Solver::rootTableSolve(const JanusCube &janusCube, uint8_t depth,
+                            Solution &work) {
 
-  return recurser->root(cIndex, cDepth, depth, work, this, &Solver::tableSolve);
+  return recurser->root(janusCube, depth, work, this, &Solver::tableSolve);
 }
 
-bool Solver::rootTrialSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                            uint8_t depth, Solution &work) {
+bool Solver::rootTrialSolve(const JanusCube &janusCube, uint8_t depth,
+                            Solution &work) {
 
-  return recurser->root(cIndex, cDepth, depth, work, this, &Solver::trialSolve);
+  return recurser->root(janusCube, depth, work, this, &Solver::trialSolve);
 }
 
-void Solver::rootMakeWorkList(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                              uint8_t depth, Solution &work) {
+void Solver::rootMakeWorkList(const JanusCube &janusCube, uint8_t depth,
+                              Solution &work) {
 
-  recurser->root(cIndex, cDepth, depth, work, this, &Solver::makeWorkList);
+  recurser->root(janusCube, depth, work, this, &Solver::makeWorkList);
 }
 
-bool Solver::rootThreadSolve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                             uint8_t depth, Solution &work) {
+bool Solver::rootThreadSolve(const JanusCube &janusCube, uint8_t depth,
+                             Solution &work) {
 
-  rootMakeWorkList(cIndex, cDepth, depth, work);
+  rootMakeWorkList(janusCube, depth, work);
 
   std::vector<std::future<bool>> results(nRootThreads());
 
@@ -242,19 +242,17 @@ unsigned int Solver::nRootThreads() {
 }
 
 // top-level solver
-bool Solver::solve(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                   uint8_t depth) {
+bool Solver::solve(const JanusCube &janusCube, uint8_t depth) {
   Solution work;
 
-  return depth == 0             ? checkWork(cIndex, work)
-         : depth <= usefulDepth ? rootTableSolve(cIndex, cDepth, depth, work)
-         : depth < threadDepth  ? rootTrialSolve(cIndex, cDepth, depth, work)
-                                : rootThreadSolve(cIndex, cDepth, depth, work);
+  return depth == 0             ? checkWork(janusCube.index, work)
+         : depth <= usefulDepth ? rootTableSolve(janusCube, depth, work)
+         : depth < threadDepth  ? rootTrialSolve(janusCube, depth, work)
+                                : rootThreadSolve(janusCube, depth, work);
 }
 
 // search via iterative deepening and return the solutions
-void Solver::search(const CubeIndex cIndex, const CubeDepth cDepth,
-                    uint8_t cParity) {
+void Solver::search(const JanusCube &janusCube, uint8_t cParity) {
 
   // clear any prior solutions
   solutions.clear();
@@ -266,7 +264,7 @@ void Solver::search(const CubeIndex cIndex, const CubeDepth cDepth,
 
   // try solving the cube with a depth of zero, and gradually increment
   // the depth until we exceed God's number
-  while (!solve(cIndex, cDepth, depth) && !canceling && depth <= GodsNumber) {
+  while (!solve(janusCube, depth) && !canceling && depth <= GodsNumber) {
     depth += depthIncrement;
     newDepthCallback(depth);
   }

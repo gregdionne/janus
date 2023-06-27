@@ -5,6 +5,7 @@
 
 #include "clioptions.hpp"
 #include "cubedepth.hpp"
+#include "januscube.hpp"
 #include "worklist.hpp"
 
 #include <memory>
@@ -18,17 +19,15 @@ public:
   virtual ~Recurser() = default;
 
   // method recurser...
-  virtual bool leaf(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                    uint8_t depth, Solution &work, Solver *solver,
-                    bool (Solver::*f)(const CubeIndex &cIndex,
-                                      const CubeDepth &cDepth, uint8_t depth,
+  virtual bool leaf(const JanusCube &janusCube, uint8_t depth, Solution &work,
+                    Solver *solver,
+                    bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
                                       Solution &work)) = 0;
 
   // root method recurser
-  virtual bool root(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                    uint8_t depth, Solution &work, Solver *solver,
-                    bool (Solver::*f)(const CubeIndex &cIndex,
-                                      const CubeDepth &cDepth, uint8_t depth,
+  virtual bool root(const JanusCube &janusCube, uint8_t depth, Solution &work,
+                    Solver *solver,
+                    bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
                                       Solution &work)) = 0;
   // utility creation
   static std::unique_ptr<Recurser> makeRecurser(const CLIOptions &options);
@@ -37,31 +36,31 @@ public:
 class RecurserQTM : public Recurser {
 public:
   // method recurser...
-  bool leaf(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t depth,
-            Solution &work, Solver *solver,
-            bool (Solver::*f)(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                              uint8_t depth, Solution &work)) final;
+  bool leaf(const JanusCube &janusCube, uint8_t depth, Solution &work,
+            Solver *solver,
+            bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
+                              Solution &work)) final;
 
   // root method recurser
-  bool root(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t depth,
-            Solution &work, Solver *solver,
-            bool (Solver::*f)(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                              uint8_t depth, Solution &work)) final;
+  bool root(const JanusCube &janusCube, uint8_t depth, Solution &work,
+            Solver *solver,
+            bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
+                              Solution &work)) final;
 };
 
 class RecurserFTM : public Recurser {
 public:
   // method recurser...
-  bool leaf(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t depth,
-            Solution &work, Solver *solver,
-            bool (Solver::*f)(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                              uint8_t depth, Solution &work)) final;
+  bool leaf(const JanusCube &janusCube, uint8_t depth, Solution &work,
+            Solver *solver,
+            bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
+                              Solution &work)) final;
 
   // root method recurser
-  bool root(const CubeIndex &cIndex, const CubeDepth &cDepth, uint8_t depth,
-            Solution &work, Solver *solver,
-            bool (Solver::*f)(const CubeIndex &cIndex, const CubeDepth &cDepth,
-                              uint8_t depth, Solution &work)) final;
+  bool root(const JanusCube &janusCube, uint8_t depth, Solution &work,
+            Solver *solver,
+            bool (Solver::*f)(const JanusCube &janusCube, uint8_t depth,
+                              Solution &work)) final;
 };
 
 } // namespace Janus
