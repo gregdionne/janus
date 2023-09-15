@@ -35,8 +35,8 @@ void validMoves() {
 
 void argDetails() {
   fprintf(stderr, "DESCRIPTION\n\n");
-  fprintf(stderr, " Janus reports all optimal solutions for one (or more)\n");
-  fprintf(stderr, " sequence of moves of the Rubik's cube.\n\n");
+  fprintf(stderr, " Janus reports all optimal solutions for one or more\n");
+  fprintf(stderr, " sequences of moves of the Rubik's cube.\n\n");
   fprintf(stderr, " When executed for the first time for a given metric\n");
   fprintf(stderr, " and depth table size, it attempts to save a database\n");
   fprintf(stderr, " in the current working directory.\n\n");
