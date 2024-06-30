@@ -68,9 +68,8 @@ int main(int argc, char *argv[]) {
 
   const char *progname = argv[0];
 
-  auto arguments = options.parse(
-      argc, argv, argUsage, argDetails,
-      [&progname]() { helpExample(progname); });
+  auto arguments = options.parse(argc, argv, argUsage, argDetails,
+                                 [&progname]() { helpExample(progname); });
 
   if (arguments.size() > 1) {
     options.usage(progname, argUsage);
