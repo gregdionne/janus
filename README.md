@@ -230,7 +230,7 @@ reading depthTable-QTM.janus... 22,240,915,200 bytes read
 
 Janus uses "depthTable-QTM.janus" as the filename for the quater-turn metric.
 
-If you wish to the smaller &#257;n&#275;r&#257s; database, add the "-enares" option.  Janus uses "depthTable-FTM-enares.janus" and "depthTable-QTM-enares.janus" for the face-turn and quater-turn metrics, respectively.
+If you wish to the smaller &#275;n&#0257;r&#0275;s database, add the "-enares" option.  Janus uses "depthTable-FTM-enares.janus" and "depthTable-QTM-enares.janus" for the face-turn and quater-turn metrics, respectively.
 
 ```
 $ janus -enares "F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2"
