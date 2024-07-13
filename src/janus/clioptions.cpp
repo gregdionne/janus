@@ -20,7 +20,7 @@ CLIOptions::CLIOptions()
           "Use a reduced depth table of 11 GB instead of 22 GB.",
           "By default, Janus constructs a depth table that reports the number "
           "of moves (modulo three) required to completely solve any two "
-          "opposing faces.  The table is large and occupies 44 GB of memory.\n "
+          "opposing faces.  The table is large and occupies 22 GB of memory.\n "
           "Janus builds a smaller database when using the 'enares' option.  "
           "Instead of storing the number of moves to completely solve two "
           "faces, the centers of each face are ignored when creating the "

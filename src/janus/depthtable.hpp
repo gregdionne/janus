@@ -158,7 +158,7 @@ private:
   // when noses are interchangeable and 173,420,352,000
   // when noses are unique.
   //
-  // Four positions are packed into each byte, so ~22GB or ~44GB
+  // Four positions are packed into each byte, so ~11GB or ~22GB
   // are required (depending on whether noses are interchangeable
   // or unique).
   //
